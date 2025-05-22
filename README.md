@@ -1,1 +1,1 @@
-# COEN-ELEC-242-Project
+# COEN/ELEC 390 Project
