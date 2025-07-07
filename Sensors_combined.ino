@@ -97,7 +97,7 @@ void loop() {
     Serial.print(" | Avg BPM = ");
     Serial.println(beatAvg);
 
-    Serial.print("🌡️ Ambient Temp: ");
+    Serial.print(" Ambient Temp: ");
     Serial.print(ambientTemp, 1);
     Serial.print(" °C | Object Temp: ");
     Serial.print(objectTemp, 1);
