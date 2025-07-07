@@ -140,7 +140,7 @@ float readMLX90614(byte reg) {
     byte high = Wire.read();
     Wire.read(); // PEC
     uint16_t raw = (high << 8) | low;
-    return (raw * 0.02) - 273.15;
+    return (raw * 0.02) - 273.15; // formula from MLX90614 datasheet
   }
 
   return -999;
