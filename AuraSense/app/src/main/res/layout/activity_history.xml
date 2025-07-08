@@ -4,7 +4,18 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
-    <!-- Export Button (placed at bottom first) -->
+    <!-- Back arrow (top-left) -->
+    <ImageButton
+        android:id="@+id/backButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_arrow_back"
+        android:tint="@android:color/black"
+        android:contentDescription="Back" />
+
+    <!-- Export Button (bottom) -->
     <Button
         android:id="@+id/exportButton"
         android:layout_width="match_parent"
@@ -16,7 +27,8 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/exportButton">
+        android:layout_above="@id/exportButton"
+        android:layout_below="@id/backButton">
 
         <TextView
             android:id="@+id/historyText"
