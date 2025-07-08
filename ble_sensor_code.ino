@@ -1,0 +1,146 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <ArduinoJson.h>
+#include "MAX30105.h"
+#include "heartRate.h"
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+
+// ========== I2C Pin Setup ==========
+#define SDA_PIN 21
+#define SCL_PIN 22
+
+// ========== MLX90614 ==========
+#define MLX90614_ADDRESS 0x5A
+#define MLX90614_TOBJ 0x07
+
+// ========== BLE UUIDs ==========
+#define SERVICE_UUID        "a0e6fc00-df5e-11ee-a506-0050569c1234"
+#define CHARACTERISTIC_UUID "a0e6fc01-df5e-11ee-a506-0050569c1234"
+
+// ========== Sensor Objects ==========
+MAX30105 particleSensor;
+Adafruit_MPU6050 mpu;
+BLECharacteristic* pCharacteristic;
+
+// ========== HR Variables ==========
+const byte RATE_SIZE = 4;
+byte rates[RATE_SIZE];
+byte rateSpot = 0;
+long lastBeat = 0;
+float beatsPerMinute = 0;
+int beatAvg = 0;
+long irValue = 0;
+
+// ========== Temp Variables ==========
+float objectTemp = 0.0;
+
+// ========== BLE Setup ==========
+void setupBLE() {
+  BLEDevice::init("ESP32_EmotionBand");
+  BLEServer* pServer = BLEDevice::createServer();
+  BLEService* pService = pServer->createService(SERVICE_UUID);
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_READ |
+                      BLECharacteristic::PROPERTY_NOTIFY
+                    );
+  pCharacteristic->addDescriptor(new BLE2902());
+  pService->start();
+  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->start();
+  Serial.println("BLE is advertising.");
+}
+
+// ========== MLX90614 Temp Read ==========
+float readMLX90614(byte reg) {
+  Wire.beginTransmission(MLX90614_ADDRESS);
+  Wire.write(reg);
+  byte error = Wire.endTransmission(false);
+  if (error != 0) return -999;
+
+  Wire.requestFrom(MLX90614_ADDRESS, (uint8_t)3);
+  unsigned long timeout = millis();
+  while (Wire.available() < 3 && millis() - timeout < 100);
+
+  if (Wire.available() >= 3) {
+    byte low = Wire.read();
+    byte high = Wire.read();
+    Wire.read(); // PEC
+    uint16_t raw = (high << 8) | low;
+    return (raw * 0.02) - 273.15;
+  }
+  return -999;
+}
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(SDA_PIN, SCL_PIN);
+  delay(500);
+
+  // HR Sensor
+  if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
+    Serial.println("MAX30102 not found!");
+    while (1);
+  }
+  particleSensor.setup();
+  particleSensor.setPulseAmplitudeRed(0x3F);
+  particleSensor.setPulseAmplitudeGreen(0);
+
+  // MPU6050
+  if (!mpu.begin()) {
+    Serial.println("MPU6050 not found!");
+    while (1);
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  setupBLE();
+  Serial.println("Sensors ready. Waiting for data...");
+}
+
+void loop() {
+  irValue = particleSensor.getIR();
+  if (checkForBeat(irValue)) {
+    long delta = millis() - lastBeat;
+    lastBeat = millis();
+    beatsPerMinute = 60 / (delta / 1000.0);
+    if (beatsPerMinute > 20 && beatsPerMinute < 255) {
+      rates[rateSpot++] = (byte)beatsPerMinute;
+      rateSpot %= RATE_SIZE;
+      beatAvg = 0;
+      for (byte x = 0; x < RATE_SIZE; x++) beatAvg += rates[x];
+      beatAvg /= RATE_SIZE;
+    }
+  }
+
+  // Send BLE data every 2 seconds
+  static unsigned long lastSend = 0;
+  if (millis() - lastSend >= 2000) {
+    sensors_event_t acc, gyro, tempEvent;
+    mpu.getEvent(&acc, &gyro, &tempEvent);
+    objectTemp = readMLX90614(MLX90614_TOBJ);
+
+    StaticJsonDocument<256> doc;
+    doc["bpm"] = beatAvg;
+    doc["temp"] = objectTemp;
+    doc["acc_x"] = acc.acceleration.x;
+    doc["acc_y"] = acc.acceleration.y;
+    doc["acc_z"] = acc.acceleration.z;
+
+    char payload[128];
+    serializeJson(doc, payload);
+    pCharacteristic->setValue(payload);
+    pCharacteristic->notify();
+
+    Serial.print("Sent BLE payload: ");
+    Serial.println(payload);
+
+    lastSend = millis();
+  }
+
+  delay(10);
+}
