@@ -1,0 +1,216 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.example.aurasense"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+9        android:targetSdkVersion="35" />
+10
+11    <!-- BLE & Location Permissions -->
+12    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+12-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:7:5-79
+12-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:7:22-76
+13    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+13-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:8:5-81
+13-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:8:22-78
+14    <uses-permission android:name="android.permission.BLUETOOTH" />
+14-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:9:5-68
+14-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:9:22-65
+15    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+15-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:10:5-74
+15-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:10:22-71
+16
+17    <!-- Android 12+ specific permissions -->
+18    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+18-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:13:5-73
+18-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:13:22-70
+19    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+19-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:14:5-76
+19-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:14:22-73
+20
+21    <permission
+21-->[androidx.core:core:1.13.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/e606e55f69712cc6c2717c0878d1e053/transformed/core-1.13.0/AndroidManifest.xml:22:5-24:47
+22        android:name="com.example.aurasense.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+22-->[androidx.core:core:1.13.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/e606e55f69712cc6c2717c0878d1e053/transformed/core-1.13.0/AndroidManifest.xml:23:9-81
+23        android:protectionLevel="signature" />
+23-->[androidx.core:core:1.13.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/e606e55f69712cc6c2717c0878d1e053/transformed/core-1.13.0/AndroidManifest.xml:24:9-44
+24
+25    <uses-permission android:name="com.example.aurasense.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+25-->[androidx.core:core:1.13.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/e606e55f69712cc6c2717c0878d1e053/transformed/core-1.13.0/AndroidManifest.xml:26:5-97
+25-->[androidx.core:core:1.13.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/e606e55f69712cc6c2717c0878d1e053/transformed/core-1.13.0/AndroidManifest.xml:26:22-94
+26
+27    <application
+27-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:16:5-46:19
+28        android:allowBackup="true"
+28-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:17:9-35
+29        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+29-->[androidx.core:core:1.13.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/e606e55f69712cc6c2717c0878d1e053/transformed/core-1.13.0/AndroidManifest.xml:28:18-86
+30        android:dataExtractionRules="@xml/data_extraction_rules"
+30-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:18:9-65
+31        android:debuggable="true"
+32        android:extractNativeLibs="true"
+33        android:fullBackupContent="@xml/backup_rules"
+33-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:19:9-54
+34        android:icon="@mipmap/ic_launcher"
+34-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:20:9-43
+35        android:label="@string/app_name"
+35-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:21:9-41
+36        android:roundIcon="@mipmap/ic_launcher_round"
+36-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:22:9-54
+37        android:supportsRtl="true"
+37-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:23:9-35
+38        android:testOnly="true"
+39        android:theme="@style/Theme.AuraSense" >
+39-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:24:9-47
+40
+41        <!-- All Activities -->
+42        <activity
+42-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:28:9-84
+43            android:name="com.example.aurasense.NotificationsActivity"
+43-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:28:19-56
+44            android:exported="false" />
+44-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:28:57-81
+45        <activity
+45-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:29:9-79
+46            android:name="com.example.aurasense.SettingsActivity"
+46-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:29:19-51
+47            android:exported="false" />
+47-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:29:52-76
+48        <activity
+48-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:30:9-78
+49            android:name="com.example.aurasense.HistoryActivity"
+49-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:30:19-50
+50            android:exported="false" />
+50-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:30:51-75
+51        <activity
+51-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:31:9-76
+52            android:name="com.example.aurasense.AlertActivity"
+52-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:31:19-48
+53            android:exported="false" />
+53-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:31:49-73
+54        <activity
+54-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:32:9-75
+55            android:name="com.example.aurasense.HomeActivity"
+55-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:32:19-47
+56            android:exported="false" />
+56-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:32:48-72
+57        <activity
+57-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:33:9-84
+58            android:name="com.example.aurasense.DevicePairingActivity"
+58-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:33:19-56
+59            android:exported="false" />
+59-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:33:57-81
+60        <activity
+60-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:34:9-78
+61            android:name="com.example.aurasense.ConsentActivity"
+61-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:34:19-50
+62            android:exported="false" />
+62-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:34:51-75
+63        <activity
+63-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:35:9-76
+64            android:name="com.example.aurasense.LoginActivity"
+64-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:35:19-48
+65            android:exported="false" />
+65-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:35:49-73
+66        <activity
+66-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:36:9-77
+67            android:name="com.example.aurasense.SignupActivity"
+67-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:36:19-49
+68            android:exported="false" />
+68-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:36:50-74
+69        <activity
+69-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:37:9-75
+70            android:name="com.example.aurasense.MainActivity"
+70-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:37:19-47
+71            android:exported="false" />
+71-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:37:48-72
+72
+73        <!-- Launcher -->
+74        <activity
+74-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:40:9-45:20
+75            android:name="com.example.aurasense.WelcomeActivity"
+75-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:40:19-50
+76            android:exported="true" >
+76-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:40:51-74
+77            <intent-filter>
+77-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:41:13-44:29
+78                <action android:name="android.intent.action.MAIN" />
+78-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:42:17-69
+78-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:42:25-66
+79
+80                <category android:name="android.intent.category.LAUNCHER" />
+80-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:43:17-77
+80-->/Users/abhishekthakur/AndroidStudioProjects/AuraSense_with_BackFunctionalities/app/src/main/AndroidManifest.xml:43:27-74
+81            </intent-filter>
+82        </activity>
+83
+84        <provider
+84-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+85            android:name="androidx.startup.InitializationProvider"
+85-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+86            android:authorities="com.example.aurasense.androidx-startup"
+86-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+87            android:exported="false" >
+87-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+88            <meta-data
+88-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+89                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+89-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+90                android:value="androidx.startup" />
+90-->[androidx.emoji2:emoji2:1.3.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/9af7c88296895176900554884fc39be6/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+91            <meta-data
+91-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/2e59c8e7531e1d75d175cb79831bdc7b/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+92                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+92-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/2e59c8e7531e1d75d175cb79831bdc7b/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+93                android:value="androidx.startup" />
+93-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/2e59c8e7531e1d75d175cb79831bdc7b/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+94            <meta-data
+94-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
+95                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+95-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
+96                android:value="androidx.startup" />
+96-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
+97        </provider>
+98
+99        <receiver
+99-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
+100            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+100-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
+101            android:directBootAware="false"
+101-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
+102            android:enabled="true"
+102-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
+103            android:exported="true"
+103-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
+104            android:permission="android.permission.DUMP" >
+104-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
+105            <intent-filter>
+105-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
+106                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+106-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
+106-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
+107            </intent-filter>
+108            <intent-filter>
+108-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
+109                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+109-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
+109-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
+110            </intent-filter>
+111            <intent-filter>
+111-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
+112                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+112-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
+112-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
+113            </intent-filter>
+114            <intent-filter>
+114-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
+115                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+115-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
+115-->[androidx.profileinstaller:profileinstaller:1.4.0] /Users/abhishekthakur/.gradle/caches/8.11.1/transforms/306743db40db7e9f93389bfd07ff3dcd/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
+116            </intent-filter>
+117        </receiver>
+118    </application>
+119
+120</manifest>

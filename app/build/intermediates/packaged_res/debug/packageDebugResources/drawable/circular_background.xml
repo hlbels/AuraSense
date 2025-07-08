@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <!-- ring thickness + color -->
+    <stroke
+        android:width="12dp"
+        android:color="#4CAF50" />
+
+    <!-- optional: make the center transparent -->
+    <solid android:color="@android:color/transparent" />
+
+    <!-- optional: force a fixed size (200×200dp in code) -->
+    <size
+        android:width="200dp"
+        android:height="200dp" />
+</shape>

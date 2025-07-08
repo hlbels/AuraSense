@@ -1,0 +1,126 @@
+[
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-xhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-hdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/menu_bottom_nav_menu.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/menu/bottom_nav_menu.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_consent.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_consent.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-xxxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/drawable_ic_android_black_24dp.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/drawable/ic_android_black_24dp.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-xxxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/drawable_ic_arrow_back.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/drawable/ic_arrow_back.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_welcome.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_welcome.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_settings.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_settings.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-mdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-hdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/xml_backup_rules.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_signup.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_signup.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_login.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_login.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_home.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_home.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_notifications.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_notifications.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/drawable-anydpi-v24_ic_launcher_foreground.xml.flat",
+        "source": "com.example.aurasense.app-pngs-28:/drawable-anydpi-v24/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/xml_data_extraction_rules.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-xxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_alert.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_alert.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_main.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-xhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-xxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_device_pairing.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_device_pairing.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-mdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/layout_activity_history.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/layout/activity_history.xml"
+    },
+    {
+        "merged": "com.example.aurasense.app-debug-32:/drawable_circular_background.xml.flat",
+        "source": "com.example.aurasense.app-main-34:/drawable/circular_background.xml"
+    }
+]
