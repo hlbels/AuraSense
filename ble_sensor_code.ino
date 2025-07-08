@@ -3,6 +3,7 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <BLE2902.h>
 #include <ArduinoJson.h>
 #include "MAX30105.h"
 #include "heartRate.h"
