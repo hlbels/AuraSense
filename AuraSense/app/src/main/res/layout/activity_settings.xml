@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="16dp">
+
+    <Button android:id="@+id/generalSettings" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="General Settings"/>
+    <Button android:id="@+id/privacySettings" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Privacy"/>
+    <Button android:id="@+id/resetPassword" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Reset Password"/>
+    <Button android:id="@+id/removeData" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="Remove My Data"/>
+    <Button android:id="@+id/logOut" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_marginTop="32dp" android:text="Log Out"/>
+</LinearLayout>
