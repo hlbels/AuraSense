@@ -1,16 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="16dp">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
-    <Button android:id="@+id/generalSettings" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="General Settings"/>
-    <Button android:id="@+id/privacySettings" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Privacy"/>
-    <Button android:id="@+id/resetPassword" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Reset Password"/>
-    <Button android:id="@+id/removeData" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:text="Remove My Data"/>
-    <Button android:id="@+id/logOut" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_marginTop="32dp" android:text="Log Out"/>
-</LinearLayout>
+    <!-- Back arrow (top-left) -->
+    <ImageButton
+        android:id="@+id/backButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@drawable/ic_arrow_back"
+        android:tint="@android:color/black"
+        android:contentDescription="Back" />
+
+    <!-- Original button stack (unchanged) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/backButton"
+        android:layout_marginTop="24dp">
+
+        <Button android:id="@+id/generalSettings" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="General Settings"/>
+
+        <Button android:id="@+id/privacySettings" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Privacy"/>
+
+        <Button android:id="@+id/resetPassword" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Reset Password"/>
+
+        <Button android:id="@+id/removeData" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Remove My Data"/>
+
+        <Button android:id="@+id/logOut" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginTop="32dp"
+            android:text="Log Out"/>
+    </LinearLayout>
+</RelativeLayout>
