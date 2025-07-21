@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">AuraSense</string>
+    <string name="consent_clauses">
+    1. **Purpose of Data Processing**:\n
+    AuraSense collects sensor data (e.g., heart rate, temperature, motion) solely for the purpose of real-time emotional analysis on your device.\n\n
+
+    2. **Data Usage &amp; Storage**:\n
+    All collected data remains on your device or temporarily on your personal cloud account if sync is enabled. The app does not transmit your data to any external servers without explicit permission.\n\n
+
+    3. **Model Tiers**:\n
+    - *Model 1* uses heart rate, temperature, and motion sensors.\n
+    - *Model 2* (optional, not active by default) will use camera and microphone data. You must manually enable this feature in the Settings for it to activate.\n\n
+
+    4. **No Remote Access**:\n
+    AuraSense does not access your device’s camera or microphone without your explicit in-app consent.\n\n
+
+    5. **Data Deletion**:\n
+    You may delete all stored data anytime via the Settings. Deletion is permanent and removes all saved entries from your device and cloud (if connected).\n\n
+
+    6. **Export &amp; Analysis**:\n
+    You may choose to export your emotional trends and readings for personal review. No export occurs without your action.\n\n
+
+    7. **Voluntary Participation**:\n
+    Use of this app is entirely voluntary. You may stop using the app and revoke consent at any time without penalty.\n\n
+
+    8. **Future Updates**:\n
+    Future versions of AuraSense may introduce new sensors or features. If these impact your privacy, you will be notified and asked to re-consent.\n\n
+
+    9. **Support**:\n
+    For any questions, contact us at support@aurasense.ai.\n\n
+
+    By continuing to use this app, you confirm that you have read, understood, and agreed to the above terms.
+</string>
+
+</resources>

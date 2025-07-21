@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <TextView
+        android:id="@+id/notificationHistory"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Loading notifications..."
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:background="#FFFFFF"
+        android:padding="16dp"
+        android:scrollbars="vertical"
+        android:overScrollMode="always" />
+
+    <Button
+        android:id="@+id/clearNotificationsBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Clear Notification History"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"
+        android:minHeight="48dp" />
+</LinearLayout>
