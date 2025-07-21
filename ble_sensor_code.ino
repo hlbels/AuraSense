@@ -105,9 +105,30 @@ void setup() {
 
 void loop() {
   irValue = particleSensor.getIR();
+  static unsigned long rrIntervals[RATE_SIZE];
+  static int rrIndex = 0;
+  static float hrv = 0;
+
   if (checkForBeat(irValue)) {
-    long delta = millis() - lastBeat;
-    lastBeat = millis();
+    long now = millis();
+    long delta = now - lastBeat;
+
+    if (lastBeat != 0 && delta > 300 && delta < 2000) {
+      rrIntervals[rrIndex] = delta;
+      rrIndex = (rrIndex + 1) % RATE_SIZE;
+
+      // Compute HRV = SDNN (std dev of RR intervals)
+      float mean = 0;
+      for (int i = 0; i < RATE_SIZE; i++) mean += rrIntervals[i];
+      mean /= RATE_SIZE;
+
+      float variance = 0;
+      for (int i = 0; i < RATE_SIZE; i++) variance += pow(rrIntervals[i] - mean, 2);
+      variance /= RATE_SIZE;
+      hrv = sqrt(variance);
+    }
+
+    lastBeat = now;
     beatsPerMinute = 60 / (delta / 1000.0);
     if (beatsPerMinute > 20 && beatsPerMinute < 255) {
       rates[rateSpot++] = (byte)beatsPerMinute;
@@ -118,27 +139,34 @@ void loop() {
     }
   }
 
-  // Send BLE data every 2 seconds
+  // Send BLE data every 2 sec
   static unsigned long lastSend = 0;
   if (millis() - lastSend >= 2000) {
     sensors_event_t acc, gyro, tempEvent;
     mpu.getEvent(&acc, &gyro, &tempEvent);
     objectTemp = readMLX90614(MLX90614_TOBJ);
 
-    StaticJsonDocument<256> doc;
-    doc["bpm"] = beatAvg;
-    doc["temp"] = objectTemp;
-    doc["acc_x"] = acc.acceleration.x;
-    doc["acc_y"] = acc.acceleration.y;
-    doc["acc_z"] = acc.acceleration.z;
+    float accX = acc.acceleration.x;
+    float accY = acc.acceleration.y;
+    float accZ = acc.acceleration.z;
+    float accMag = sqrt(accX * accX + accY * accY + accZ * accZ);
 
-    char payload[128];
-    serializeJson(doc, payload);
-    pCharacteristic->setValue(payload);
+    StaticJsonDocument<512> doc;
+    doc["bpm"] = beatAvg;
+    doc["hrv"] = hrv;
+    doc["temp"] = objectTemp;
+    doc["acc_x"] = accX;
+    doc["acc_y"] = accY;
+    doc["acc_z"] = accZ;
+    doc["acc_mag"] = accMag;
+
+    String jsonString;
+    serializeJson(doc, jsonString);
+    pCharacteristic->setValue(jsonString.c_str());
     pCharacteristic->notify();
 
     Serial.print("Sent BLE payload: ");
-    Serial.println(payload);
+    Serial.println(jsonString);
 
     lastSend = millis();
   }
