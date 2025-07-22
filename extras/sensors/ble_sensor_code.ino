@@ -11,8 +11,8 @@
 #include <Adafruit_Sensor.h>
 
 // ========== I2C Pin Setup ==========
-#define SDA_PIN 21
-#define SCL_PIN 22
+#define SDA_PIN 11
+#define SCL_PIN 12
 
 // ========== MLX90614 ==========
 #define MLX90614_ADDRESS 0x5A
@@ -173,3 +173,4 @@ void loop() {
 
   delay(10);
 }
+
