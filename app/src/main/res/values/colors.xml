@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Original colors (keeping for compatibility) -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -10,4 +11,39 @@
     <color name="link_blue">#1976D2</color>
     <color name="colorAccent">#474949</color>
 
+    <!-- Primary Theme Colors -->
+    <color name="primary_teal">#009688</color>
+    <color name="primary_teal_dark">#00695C</color>
+    <color name="primary_teal_light">#4DB6AC</color>
+    <color name="primary_teal_variant">#26A69A</color>
+
+    <!-- Status Colors -->
+    <color name="status_normal">#4CAF50</color>
+    <color name="status_normal_light">#81C784</color>
+    <color name="status_warning">#FF9800</color>
+    <color name="status_warning_light">#FFB74D</color>
+    <color name="status_error">#F44336</color>
+    <color name="status_error_light">#EF5350</color>
+    <color name="status_disconnected">#9E9E9E</color>
+    <color name="status_disconnected_light">#BDBDBD</color>
+
+    <!-- Background Colors -->
+    <color name="background_primary">#F9FAFB</color>
+    <color name="background_secondary">#F5F5F5</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_background_elevated">#FAFAFA</color>
+    <color name="card_border">#E0E0E0</color>
+    <color name="card_border_light">#EEEEEE</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="text_on_status">#FFFFFF</color>
+
+    <!-- Debug Colors -->
+    <color name="debug_background">#ECEFF1</color>
+    <color name="debug_text">#37474F</color>
+    <color name="debug_border">#CFD8DC</color>
 </resources>

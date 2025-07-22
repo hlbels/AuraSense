@@ -29,4 +29,8 @@ public class HistoryStorage {
     public static List<Entry> getHistory() {
         return history;
     }
+
+    public static void clearHistory() {
+        history.clear();
+    }
 }

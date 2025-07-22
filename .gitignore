@@ -13,3 +13,18 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Additional Android/Kotlin files
+.kotlin/
+app/build/
+*/build/
+*.apk
+*.aab
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db

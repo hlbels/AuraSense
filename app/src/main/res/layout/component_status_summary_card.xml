@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/statusSummaryCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/spacing_md"
+    android:background="@drawable/status_card_normal"
+    android:elevation="@dimen/card_elevation_elevated"
+    android:orientation="horizontal"
+    android:padding="@dimen/spacing_lg"
+    android:gravity="center_vertical">
+
+    <!-- Status Icon -->
+    <ImageView
+        android:id="@+id/statusIcon"
+        android:layout_width="@dimen/icon_size_status"
+        android:layout_height="@dimen/icon_size_status"
+        android:layout_marginEnd="@dimen/spacing_md"
+        android:src="@drawable/ic_home"
+        app:tint="@color/text_on_status"
+        android:contentDescription="Status indicator" />
+
+    <!-- Status Text Container -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/statusTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stress Level"
+            android:textColor="@color/text_on_status"
+            android:textSize="@dimen/text_size_caption"
+            android:textStyle="normal"
+            android:alpha="0.8" />
+
+        <TextView
+            android:id="@+id/statusMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:text="All Good"
+            android:textColor="@color/text_on_status"
+            android:textSize="@dimen/text_size_title"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Optional timestamp -->
+    <TextView
+        android:id="@+id/statusTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Just now"
+        android:textColor="@color/text_on_status"
+        android:textSize="@dimen/text_size_caption"
+        android:alpha="0.7"
+        android:visibility="gone" />
+
+</LinearLayout>

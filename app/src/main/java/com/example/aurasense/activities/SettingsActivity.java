@@ -9,9 +9,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.aurasense.R;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -23,22 +25,19 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        // Show back arrow in the action bar
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Settings");
-        }
-
+        // Initialize views
         switchStressAlerts = findViewById(R.id.switchStressAlerts);
         switchModel2 = findViewById(R.id.switchModel2);
         exportDataBtn = findViewById(R.id.exportDataBtn);
         deleteDataBtn = findViewById(R.id.deleteDataBtn);
         backBtn = findViewById(R.id.backBtn);
 
+        // Load preferences
         SharedPreferences prefs = getSharedPreferences("AuraPrefs", MODE_PRIVATE);
         switchStressAlerts.setChecked(prefs.getBoolean("stress_alerts_enabled", true));
         switchModel2.setChecked(prefs.getBoolean("model_2_enabled", false));
 
+        // Set up switch listeners
         switchStressAlerts.setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) -> {
             prefs.edit().putBoolean("stress_alerts_enabled", isChecked).apply();
             Toast.makeText(this, "Stress alerts " + (isChecked ? "enabled" : "disabled"), Toast.LENGTH_SHORT).show();
@@ -49,25 +48,79 @@ public class SettingsActivity extends AppCompatActivity {
             Toast.makeText(this, "Model 2 " + (isChecked ? "enabled" : "disabled"), Toast.LENGTH_SHORT).show();
         });
 
+        // Set up button listeners
         exportDataBtn.setOnClickListener(v -> {
-            // Open file manager (optional, adjust if implementing real export)
             Toast.makeText(this, "Exporting data...", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(Uri.parse("content://com.example.aurasense.provider/data"), "*/*");
             startActivity(intent);
         });
 
-        deleteDataBtn.setOnClickListener(v -> {
-            getSharedPreferences("AuraPrefs", MODE_PRIVATE).edit().clear().apply();
-            Toast.makeText(this, "Data deleted successfully", Toast.LENGTH_SHORT).show();
+        deleteDataBtn.setOnClickListener(v -> showDeleteDataDialog());
+
+        backBtn.setOnClickListener(v -> {
+            // Navigate back to home screen
+            startActivity(new Intent(this, HomeActivity.class));
+            finish();
         });
 
-        backBtn.setOnClickListener(v -> finish());
+        // Set up bottom navigation
+        BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
+        bottomNavigation.setSelectedItemId(R.id.nav_settings);
+
+        bottomNavigation.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                startActivity(new Intent(this, HomeActivity.class));
+                return true;
+            } else if (id == R.id.nav_history) {
+                startActivity(new Intent(this, HistoryActivity.class));
+                return true;
+            } else if (id == R.id.nav_notifications) {
+                startActivity(new Intent(this, NotificationActivity.class));
+                return true;
+            } else if (id == R.id.nav_profile) {
+                startActivity(new Intent(this, ProfileActivity.class));
+                return true;
+            } else if (id == R.id.nav_settings) {
+                return true;
+            }
+            return false;
+        });
     }
-    // Handle back arrow press
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish(); // Close this activity and go back
-        return true;
+
+    private void showDeleteDataDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete All Data")
+                .setMessage("Are you sure you want to delete all app data? This will clear:\n\n" +
+                        "• All stress history\n" +
+                        "• All notifications\n" +
+                        "• All settings\n\n" +
+                        "This action cannot be undone.")
+                .setPositiveButton("Delete All", (dialog, which) -> {
+                    deleteAllAppData();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteAllAppData() {
+        try {
+            // Clear all SharedPreferences
+            getSharedPreferences("AuraPrefs", MODE_PRIVATE).edit().clear().apply();
+            getSharedPreferences("AuraNotifications", MODE_PRIVATE).edit().clear().apply();
+            
+            // Clear history storage
+            com.example.aurasense.utils.HistoryStorage.clearHistory();
+            
+            // Reset switches to default values
+            switchStressAlerts.setChecked(true);
+            switchModel2.setChecked(false);
+            
+            Toast.makeText(this, "All app data deleted successfully", Toast.LENGTH_LONG).show();
+            
+        } catch (Exception e) {
+            Toast.makeText(this, "Error deleting data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }
