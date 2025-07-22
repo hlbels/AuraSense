@@ -58,14 +58,14 @@ public class TFLiteEmotionInterpreter {
             return -1;
         }
 
-        // Normalize inputs
-        bpm /= 100f;
-        hrv /= 100f;
-        temp = (temp - 30f) / 6f;
-        accX /= 10f;
-        accY /= 10f;
-        accZ /= 10f;
-        accMag = (accMag - 9.8f) / 5f;
+        // Normalize inputs using conservative WESAD-style assumptions
+        bpm = Math.min(Math.max(bpm, 40f), 180f) / 100f;
+        hrv = Math.min(Math.max(hrv, 10f), 150f) / 100f;
+        temp = Math.max(0f, Math.min((temp - 30f) / 6f, 1f));
+        accX = Math.max(-2f, Math.min(accX / 10f, 2f));
+        accY = Math.max(-2f, Math.min(accY / 10f, 2f));
+        accZ = Math.max(-2f, Math.min(accZ / 10f, 2f));
+        accMag = Math.min(Math.max((accMag - 9.8f) / 5f, -2f), 2f);
 
         float[][] input = new float[1][7];
         input[0][0] = bpm;
