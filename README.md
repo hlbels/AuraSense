@@ -6,44 +6,44 @@
 
 AuraSense is an Android application that provides real-time stress monitoring using BLE sensors and AI-powered analysis. The app uses TensorFlow Lite for on-device machine learning to detect stress levels from biometric data including heart rate, temperature, and motion sensors.
 
-## 🚀 Features
+## Features
 
-### 📱 **Modern UI/UX**
+### **Modern UI/UX**
 
 - **Clean Home Screen** with biometric data cards (❤️ Heart Rate, 🌡️ Temperature, 🏃‍♂️ Motion)
 - **Dynamic Status Cards** that change color based on stress levels
 - **Consistent Bottom Navigation** across all screens
 - **Material Design 3** principles with custom theming
 
-### 🧠 **AI-Powered Stress Detection**
+### **AI-Powered Stress Detection**
 
 - **TensorFlow Lite Integration** for on-device ML inference
 - **Smoothing Algorithm** with 5-sample rolling window for stable predictions
 - **Hysteresis Logic** to prevent rapid state switching
 - **Real-time Analysis** of 7 biometric parameters
 
-### 🔔 **Smart Notifications**
+### **Smart Notifications**
 
 - **System Notifications** when high stress is detected
 - **Vibration Alerts** with customizable patterns
 - **Rich Notifications** with heart rate data and wellness advice
 - **Notification History** management
 
-### 📊 **Data Management**
+### **Data Management**
 
 - **Historical Data Storage** with stress level analysis
 - **Clean History Display** showing stress levels and timestamps
 - **Data Export** capabilities
 - **Clear History** with confirmation dialogs
 
-### 🔗 **BLE Connectivity**
+### **BLE Connectivity**
 
 - **Bluetooth Low Energy** sensor integration
 - **Real-time Data Streaming** from wearable devices
 - **Connection Management** with automatic reconnection
 - **JSON Data Processing** with error handling
 
-## 🏗️ Architecture
+## Architecture
 
 ### **Design Patterns**
 
@@ -70,7 +70,7 @@ com.example.aurasense/
     └── HistoryStorage          # Data storage
 ```
 
-## 🛠️ Setup & Installation
+## Setup & Installation
 
 ### **Prerequisites**
 
@@ -105,7 +105,7 @@ com.example.aurasense/
    ./gradlew installDebug
    ```
 
-## 📋 Dependencies
+## Dependencies
 
 ### **Core Dependencies**
 
@@ -137,7 +137,7 @@ implementation(libs.androidx.material3)
 <uses-permission android:name="android.permission.VIBRATE" />
 ```
 
-## 🤖 AI Model Details
+## AI Model Details
 
 ### **TensorFlow Lite Model**
 
@@ -157,7 +157,7 @@ private static final float NORMAL_THRESHOLD = 0.3f;
 int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, accZ, accMag);
 ```
 
-## 📱 Screenshots
+## Screenshots
 
 ### Home Screen
 
@@ -171,7 +171,7 @@ int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, ac
 - System notification management
 - Data clearing capabilities
 
-## 🔧 Development
+## Development
 
 ### **Building**
 
@@ -193,7 +193,7 @@ int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, ac
 - Maintain consistent naming conventions
 - Add comments for complex algorithms
 
-## 🤝 Contributing
+## Contributing
 
 1. **Fork the repository**
 2. **Create feature branch** (`git checkout -b feature/amazing-feature`)
@@ -201,17 +201,17 @@ int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, ac
 4. **Push to branch** (`git push origin feature/amazing-feature`)
 5. **Open Pull Request**
 
-## 📄 License
+## License
 
 This project is part of COEN/ELEC 390 coursework.
 
-## 👥 Team
+## Team
 
 - **Your Team Members** - Add your names here
 - **Course**: COEN/ELEC 390
 - **Institution**: [Your University]
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### **Common Issues**
 
