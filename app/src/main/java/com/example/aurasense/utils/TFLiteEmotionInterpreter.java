@@ -25,10 +25,6 @@ public class TFLiteEmotionInterpreter {
     private float lastSmoothedValue = 0;
     private int lastStableLabel = 0; // 0 = normal, 1 = stress
 
-    // Thresholds
-    private static final float STRESS_THRESHOLD = 0.7f;
-    private static final float NORMAL_THRESHOLD = 0.3f;
-
     public TFLiteEmotionInterpreter(Context context) {
         try {
             interpreter = new Interpreter(loadModelFile(context));
@@ -48,8 +44,7 @@ public class TFLiteEmotionInterpreter {
     }
 
     /**
-     * Predicts stress (1) or normal (0) with smoothing and hysteresis.
-     * Uses 7 normalized inputs: bpm, hrv, temp, accX, accY, accZ, accMag
+     * Predicts stress (1) or normal (0) with smoothing, compensation, and hysteresis.
      */
     public int predictWithSmoothing(float bpm, float hrv, float temp,
                                     float accX, float accY, float accZ, float accMag) {
@@ -58,47 +53,58 @@ public class TFLiteEmotionInterpreter {
             return -1;
         }
 
-        // Normalize inputs using conservative WESAD-style assumptions
-        bpm = Math.min(Math.max(bpm, 40f), 180f) / 100f;
-        hrv = Math.min(Math.max(hrv, 10f), 150f) / 100f;
-        temp = Math.max(0f, Math.min((temp - 30f) / 6f, 1f));
-        accX = Math.max(-2f, Math.min(accX / 10f, 2f));
-        accY = Math.max(-2f, Math.min(accY / 10f, 2f));
-        accZ = Math.max(-2f, Math.min(accZ / 10f, 2f));
-        accMag = Math.min(Math.max((accMag - 9.8f) / 5f, -2f), 2f);
+        // Normalize inputs
+        float normBpm = bpm / 100f;
+        float normHrv = hrv / 100f;
+        float normTemp = (temp - 30f) / 6f;  // Expected 30–36°C
+        float normX = accX / 10f;
+        float normY = accY / 10f;
+        float normZ = accZ / 10f;
+        float normMag = (accMag - 9.8f) / 5f;
 
-        float[][] input = new float[1][7];
-        input[0][0] = bpm;
-        input[0][1] = hrv;
-        input[0][2] = temp;
-        input[0][3] = accX;
-        input[0][4] = accY;
-        input[0][5] = accZ;
-        input[0][6] = accMag;
-
+        float[][] input = {{normBpm, normHrv, normTemp, normX, normY, normZ, normMag}};
         float[][] output = new float[1][1];
 
         try {
             interpreter.run(input, output);
             float rawPrediction = output[0][0];
-            Log.d(TAG, String.format("Model raw prediction: %.3f", rawPrediction));
+            Log.d(TAG, String.format("Raw prediction: %.3f", rawPrediction));
 
             // Add to prediction history
             predictionHistory.add(rawPrediction);
             if (predictionHistory.size() > SMOOTH_WINDOW)
                 predictionHistory.poll();
 
-            // Compute smoothed average
+            // Smooth average
             float avg = 0;
-            for (float p : predictionHistory) avg += p;
+            for (float val : predictionHistory) avg += val;
             avg /= predictionHistory.size();
             lastSmoothedValue = avg;
+
             Log.d(TAG, String.format("Smoothed prediction: %.3f", avg));
 
-            // Apply hysteresis
-            if (avg > STRESS_THRESHOLD) {
+            // ==== Smart Medical Compensation ====
+            float adjustedStressThreshold = 0.7f;
+            float adjustedNormalThreshold = 0.3f;
+
+            // If temperature is wrist-range (<34°C), raise tolerance
+            if (temp < 34.0f) {
+                adjustedStressThreshold += 0.15f;  // more forgiving
+                adjustedNormalThreshold += 0.10f;
+                Log.d(TAG, "Applying wrist-based compensation for temp = " + temp);
+            }
+
+            // Suppress false stress if motion + hrv are both low
+            if (hrv > 50 && accMag < 10.5f && temp >= 32.0f) {
+                Log.d(TAG, "Grace zone detected (low motion + stable HRV)");
+                lastStableLabel = 0;
+                return 0;
+            }
+
+            // ==== Hysteresis ====
+            if (avg > adjustedStressThreshold) {
                 lastStableLabel = 1;
-            } else if (avg < NORMAL_THRESHOLD) {
+            } else if (avg < adjustedNormalThreshold) {
                 lastStableLabel = 0;
             }
 
