@@ -1,5 +1,6 @@
 package com.example.aurasense.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -7,6 +8,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.aurasense.R;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -18,12 +20,7 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        // Show back arrow in the action bar
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Profile");
-        }
-
+        // Initialize views
         profilePic = findViewById(R.id.profileImageView);
         nameText = findViewById(R.id.nameTextView);
         emailText = findViewById(R.id.emailTextView);
@@ -36,11 +33,29 @@ public class ProfileActivity extends AppCompatActivity {
 
         // You can optionally set a default drawable:
         profilePic.setImageResource(R.drawable.ic_profile);
-    }
-    // Handle back arrow press
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish(); // Close this activity and go back
-        return true;
+
+        // Set up bottom navigation
+        BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
+        bottomNavigation.setSelectedItemId(R.id.nav_profile);
+
+        bottomNavigation.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                startActivity(new Intent(this, HomeActivity.class));
+                return true;
+            } else if (id == R.id.nav_history) {
+                startActivity(new Intent(this, HistoryActivity.class));
+                return true;
+            } else if (id == R.id.nav_notifications) {
+                startActivity(new Intent(this, NotificationActivity.class));
+                return true;
+            } else if (id == R.id.nav_profile) {
+                return true;
+            } else if (id == R.id.nav_settings) {
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            }
+            return false;
+        });
     }
 }

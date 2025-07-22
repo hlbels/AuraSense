@@ -74,8 +74,17 @@ public class BLEManager {
             bluetoothGatt = null;
         }
 
-        Log.d(TAG, "Connecting to GATT server...");
-        bluetoothGatt = device.connectGatt(context, false, gattCallback);
+        Log.d(TAG, "Connecting to GATT server: " + device.getName() + " (" + device.getAddress() + ")");
+        
+        // Use autoConnect=true for more reliable connection
+        bluetoothGatt = device.connectGatt(context, true, gattCallback);
+        
+        if (bluetoothGatt == null) {
+            Log.e(TAG, "Failed to create GATT connection");
+            if (callback != null) {
+                callback.onDisconnected();
+            }
+        }
     }
 
     public void disconnect() {
@@ -103,10 +112,23 @@ public class BLEManager {
             Log.d(TAG, "onConnectionStateChange: status=" + status + ", newState=" + newState);
 
             if (newState == android.bluetooth.BluetoothProfile.STATE_CONNECTED) {
-                Log.d(TAG, "Connected to GATT. Requesting MTU...");
-                gatt.requestMtu(512);
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    Log.d(TAG, "Connected to GATT successfully. Requesting MTU...");
+                    gatt.requestMtu(512);
+                } else {
+                    Log.e(TAG, "Connected but with error status: " + status);
+                    if (callback != null) callback.onDisconnected();
+                }
             } else if (newState == android.bluetooth.BluetoothProfile.STATE_DISCONNECTED) {
-                Log.w(TAG, "Disconnected from GATT. Status: " + status);
+                if (status == 133) {
+                    Log.e(TAG, "Connection failed with status 133 (GATT_ERROR/Timeout). Device may not be ready or out of range.");
+                } else if (status == 8) {
+                    Log.e(TAG, "Connection failed with status 8 (Connection timeout).");
+                } else if (status == 19) {
+                    Log.e(TAG, "Connection failed with status 19 (Disconnected by remote device).");
+                } else {
+                    Log.w(TAG, "Disconnected from GATT. Status: " + status);
+                }
                 if (callback != null) callback.onDisconnected();
             }
         }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:layout_margin="@dimen/spacing_xs"
+    android:background="@drawable/card_background"
+    android:elevation="@dimen/card_elevation"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_md"
+    android:gravity="center">
+
+    <!-- Emoji/Icon -->
+    <TextView
+        android:id="@+id/biometricEmoji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="❤️"
+        android:textSize="32sp"
+        android:layout_marginBottom="@dimen/spacing_sm" />
+
+    <!-- Value -->
+    <TextView
+        android:id="@+id/biometricValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="@dimen/spacing_xs" />
+
+    <!-- Label -->
+    <TextView
+        android:id="@+id/biometricLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Heart Rate"
+        android:textSize="@dimen/text_size_caption"
+        android:textColor="@color/text_secondary"
+        android:gravity="center" />
+
+</LinearLayout>

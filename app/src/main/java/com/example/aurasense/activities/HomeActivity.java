@@ -7,13 +7,17 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.aurasense.R;
 import com.example.aurasense.ble.BLEManager;
 import com.example.aurasense.utils.HistoryStorage;
 import com.example.aurasense.utils.TFLiteEmotionInterpreter;
+import com.example.aurasense.utils.NotificationManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.json.JSONException;
@@ -23,11 +27,17 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
 
     private static final String TAG = "HomeActivity";
 
-    private TextView hrValue, tempCard, motionCard, stressStatus, debugRawJsonText;
+    private TextView hrValue, tempCard, motionCard, debugRawJsonText;
     private Button connectDeviceBtn;
     private BLEManager bleManager;
     private TFLiteEmotionInterpreter interpreter;
+    private NotificationManager notificationManager;
     private boolean highStressTriggered = false;
+
+    // Status Summary Card components
+    private LinearLayout statusSummaryCard;
+    private ImageView statusIcon;
+    private TextView statusMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,12 +54,20 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         hrValue = findViewById(R.id.hrValue);
         tempCard = findViewById(R.id.tempCard);
         motionCard = findViewById(R.id.motionCard);
-        stressStatus = findViewById(R.id.stressStatus);
         debugRawJsonText = findViewById(R.id.debugRawJsonText);
         connectDeviceBtn = findViewById(R.id.connectDeviceBtn);
 
-        // Load interpreter
+        // Initialize Status Summary Card components
+        statusSummaryCard = findViewById(R.id.statusSummaryCard);
+        statusIcon = findViewById(R.id.statusIcon);
+        statusMessage = findViewById(R.id.statusMessage);
+
+        // Set initial status
+        updateStatusCard("normal", "All Good");
+
+        // Load interpreter and notification manager
         interpreter = new TFLiteEmotionInterpreter(this);
+        notificationManager = new NotificationManager(this);
 
         // BLE Manager setup
         boolean isConnected = getIntent().getBooleanExtra("isConnected", false);
@@ -103,8 +121,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
     public void onDisconnected() {
         runOnUiThread(() -> {
             Toast.makeText(this, "Device disconnected!", Toast.LENGTH_SHORT).show();
-            stressStatus.setText("Disconnected");
-            stressStatus.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            updateStatusCard("disconnected", "Device Disconnected");
         });
     }
 
@@ -133,19 +150,32 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                     bpm, hrv, temp, accX, accY, accZ, accMag));
 
             runOnUiThread(() -> {
-                hrValue.setText(String.format("%.0f bpm", bpm));
-                tempCard.setText(String.format("%.1f °C", temp));
-                motionCard.setText(String.format("x: %.2f y: %.2f z: %.2f", accX, accY, accZ));
+                hrValue.setText(String.format("%.0f", bpm));
+                tempCard.setText(String.format("%.1f°C", temp));
+                
+                // Convert motion to user-friendly activity level
+                String activityLevel;
+                if (accMag < 10.5) {
+                    activityLevel = "Resting";
+                } else if (accMag < 12.0) {
+                    activityLevel = "Light";
+                } else if (accMag < 15.0) {
+                    activityLevel = "Moderate";
+                } else {
+                    activityLevel = "Active";
+                }
+                motionCard.setText(activityLevel);
             });
 
-            int prediction = interpreter.predict(bpm, hrv, temp, accX, accY, accZ, accMag);
+            int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, accZ, accMag);
             Log.d(TAG, "Prediction from model: " + prediction);
 
             runOnUiThread(() -> {
                 if (prediction == 1 && !highStressTriggered) {
                     highStressTriggered = true;
-                    stressStatus.setText("High Stress Detected!");
-                    stressStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                    updateStatusCard("high_stress", "High Stress Detected!");
+                    
+                    // Save notification to history
                     SharedPreferences notifPrefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
                     SharedPreferences.Editor editor = notifPrefs.edit();
                     String timestamp = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString();
@@ -154,13 +184,14 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                     editor.putString("notifications", newLog.trim());
                     editor.apply();
 
+                    // Send real-time system notification
+                    notificationManager.sendStressAlert(bpm, timestamp);
+
                 } else if (prediction == 0) {
                     highStressTriggered = false;
-                    stressStatus.setText("Normal");
-                    stressStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                    updateStatusCard("normal", "All Good");
                 } else if (prediction == -1) {
-                    stressStatus.setText("Prediction Error");
-                    stressStatus.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                    updateStatusCard("error", "Unable to Analyze");
                 }
             });
 
@@ -176,6 +207,43 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         super.onResume();
         if (bleManager != null) {
             bleManager.setCallback(this);
+        }
+    }
+
+    /**
+     * Updates the status summary card with appropriate styling and content
+     */
+    private void updateStatusCard(String status, String message) {
+        if (statusSummaryCard == null || statusIcon == null || statusMessage == null) {
+            return;
+        }
+
+        switch (status.toLowerCase()) {
+            case "normal":
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_normal));
+                statusIcon.setImageResource(R.drawable.ic_check_circle);
+                statusMessage.setText(message);
+                break;
+            case "high_stress":
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_warning));
+                statusIcon.setImageResource(R.drawable.ic_warning);
+                statusMessage.setText(message);
+                break;
+            case "disconnected":
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_disconnected));
+                statusIcon.setImageResource(R.drawable.ic_home);
+                statusMessage.setText(message);
+                break;
+            case "error":
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_warning));
+                statusIcon.setImageResource(R.drawable.ic_warning);
+                statusMessage.setText(message);
+                break;
+            default:
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_normal));
+                statusIcon.setImageResource(R.drawable.ic_check_circle);
+                statusMessage.setText("Unknown Status");
+                break;
         }
     }
 
