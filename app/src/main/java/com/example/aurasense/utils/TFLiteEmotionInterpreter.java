@@ -19,11 +19,15 @@ public class TFLiteEmotionInterpreter {
 
     private Interpreter interpreter;
 
-    // Smoothing and hysteresis
+    // Smoothing + hysteresis
     private static final int SMOOTH_WINDOW = 5;
     private final Queue<Float> predictionHistory = new LinkedList<>();
     private float lastSmoothedValue = 0;
     private int lastStableLabel = 0; // 0 = normal, 1 = stress
+
+    // Hysteresis thresholds
+    private static final float STRESS_THRESHOLD = 0.7f;
+    private static final float NORMAL_THRESHOLD = 0.3f;
 
     public TFLiteEmotionInterpreter(Context context) {
         try {
@@ -43,9 +47,6 @@ public class TFLiteEmotionInterpreter {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
-    /**
-     * Predicts stress (1) or normal (0) with smoothing, compensation, and hysteresis.
-     */
     public int predictWithSmoothing(float bpm, float hrv, float temp,
                                     float accX, float accY, float accZ, float accMag) {
         if (interpreter == null) {
@@ -53,58 +54,55 @@ public class TFLiteEmotionInterpreter {
             return -1;
         }
 
-        // Normalize inputs
-        float normBpm = bpm / 100f;
-        float normHrv = hrv / 100f;
-        float normTemp = (temp - 30f) / 6f;  // Expected 30–36°C
-        float normX = accX / 10f;
-        float normY = accY / 10f;
-        float normZ = accZ / 10f;
-        float normMag = (accMag - 9.8f) / 5f;
+        // ----------- Validation checks ----------
+        if (bpm <= 0 || temp <= 25) {
+            Log.w(TAG, "Skipping invalid input: bpm=" + bpm + ", temp=" + temp);
+            return -1;
+        }
 
-        float[][] input = {{normBpm, normHrv, normTemp, normX, normY, normZ, normMag}};
+        // ----------- Temperature Compensation (for wrist placement) ----------
+        if (temp < 34.0f) {
+            temp += 5.0f;  // Correct for surface temp if wearable is on wrist
+            Log.d(TAG, "Temperature adjusted for wrist: " + temp);
+        }
+
+        // Normalize inputs
+        bpm /= 100f;
+        hrv /= 100f;
+        temp = (temp - 30f) / 6f;
+        accX /= 10f;
+        accY /= 10f;
+        accZ /= 10f;
+        accMag = (accMag - 9.8f) / 5f;
+
+        float[][] input = new float[1][7];
+        input[0][0] = bpm;
+        input[0][1] = hrv;
+        input[0][2] = temp;
+        input[0][3] = accX;
+        input[0][4] = accY;
+        input[0][5] = accZ;
+        input[0][6] = accMag;
+
         float[][] output = new float[1][1];
 
         try {
             interpreter.run(input, output);
-            float rawPrediction = output[0][0];
-            Log.d(TAG, String.format("Raw prediction: %.3f", rawPrediction));
+            float raw = output[0][0];
+            Log.d(TAG, String.format("Raw model prediction: %.3f", raw));
 
-            // Add to prediction history
-            predictionHistory.add(rawPrediction);
-            if (predictionHistory.size() > SMOOTH_WINDOW)
-                predictionHistory.poll();
+            predictionHistory.add(raw);
+            if (predictionHistory.size() > SMOOTH_WINDOW) predictionHistory.poll();
 
-            // Smooth average
             float avg = 0;
             for (float val : predictionHistory) avg += val;
             avg /= predictionHistory.size();
             lastSmoothedValue = avg;
-
             Log.d(TAG, String.format("Smoothed prediction: %.3f", avg));
 
-            // ==== Smart Medical Compensation ====
-            float adjustedStressThreshold = 0.7f;
-            float adjustedNormalThreshold = 0.3f;
-
-            // If temperature is wrist-range (<34°C), raise tolerance
-            if (temp < 34.0f) {
-                adjustedStressThreshold += 0.15f;  // more forgiving
-                adjustedNormalThreshold += 0.10f;
-                Log.d(TAG, "Applying wrist-based compensation for temp = " + temp);
-            }
-
-            // Suppress false stress if motion + hrv are both low
-            if (hrv > 50 && accMag < 10.5f && temp >= 32.0f) {
-                Log.d(TAG, "Grace zone detected (low motion + stable HRV)");
-                lastStableLabel = 0;
-                return 0;
-            }
-
-            // ==== Hysteresis ====
-            if (avg > adjustedStressThreshold) {
+            if (avg > STRESS_THRESHOLD) {
                 lastStableLabel = 1;
-            } else if (avg < adjustedNormalThreshold) {
+            } else if (avg < NORMAL_THRESHOLD) {
                 lastStableLabel = 0;
             }
 
