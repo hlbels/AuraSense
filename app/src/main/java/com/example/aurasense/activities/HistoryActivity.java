@@ -19,7 +19,7 @@ import java.util.Locale;
 public class HistoryActivity extends AppCompatActivity {
 
     private ListView historyListView;
-    private Button clearHistoryBtn;
+    private Button clearHistoryBtn, analyticsBtn;
     private TFLiteEmotionInterpreter interpreter;
 
     @Override
@@ -33,8 +33,14 @@ public class HistoryActivity extends AppCompatActivity {
         // Initialize views
         historyListView = findViewById(R.id.historyListView);
         clearHistoryBtn = findViewById(R.id.clearHistoryBtn);
+        analyticsBtn = findViewById(R.id.analyticsBtn);
 
-        // Set up clear history button
+        // Set up buttons
+        analyticsBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(HistoryActivity.this, AnalyticsActivity.class);
+            startActivity(intent);
+        });
+
         clearHistoryBtn.setOnClickListener(v -> showClearHistoryDialog());
 
         // Load and display history
@@ -71,18 +77,19 @@ public class HistoryActivity extends AppCompatActivity {
 
         for (HistoryStorage.Entry entry : HistoryStorage.getHistory()) {
             // Use the TensorFlow model to determine stress level
-            float accMag = (float) Math.sqrt(entry.accX * entry.accX + entry.accY * entry.accY + entry.accZ * entry.accZ);
-            int prediction = interpreter.predictWithSmoothing(entry.bpm, entry.hrv, entry.temp, entry.accX, entry.accY, entry.accZ, accMag);
-            
+            float accMag = (float) Math
+                    .sqrt(entry.accX * entry.accX + entry.accY * entry.accY + entry.accZ * entry.accZ);
+            int prediction = interpreter.predictWithSmoothing(entry.bpm, entry.hrv, entry.temp, entry.accX, entry.accY,
+                    entry.accZ, accMag);
+
             String stressLevel = (prediction == 1) ? "High Stress" : "Normal";
             String heartRate = String.format("%.0f bpm", entry.bpm);
-            
+
             String formatted = String.format(
                     "Stress: %s • %s\n%s",
                     stressLevel,
                     heartRate,
-                    sdf.format(new Date(entry.timestamp))
-            );
+                    sdf.format(new Date(entry.timestamp)));
             entries.add(formatted);
         }
 

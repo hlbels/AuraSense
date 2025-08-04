@@ -28,11 +28,14 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
     private static final String TAG = "HomeActivity";
 
     private TextView hrValue, tempCard, motionCard, debugRawJsonText;
+    private TextView accXValue, accYValue, accZValue;
+    private LinearLayout motionCardLayout, detailedMotionData;
     private Button connectDeviceBtn;
     private BLEManager bleManager;
     private TFLiteEmotionInterpreter interpreter;
     private NotificationManager notificationManager;
     private boolean highStressTriggered = false;
+    private boolean motionDetailsExpanded = false;
 
     // Status Summary Card components
     private LinearLayout statusSummaryCard;
@@ -57,10 +60,20 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         debugRawJsonText = findViewById(R.id.debugRawJsonText);
         connectDeviceBtn = findViewById(R.id.connectDeviceBtn);
 
+        // Initialize motion detail views
+        motionCardLayout = findViewById(R.id.motionCardLayout);
+        detailedMotionData = findViewById(R.id.detailedMotionData);
+        accXValue = findViewById(R.id.accXValue);
+        accYValue = findViewById(R.id.accYValue);
+        accZValue = findViewById(R.id.accZValue);
+
         // Initialize Status Summary Card components
         statusSummaryCard = findViewById(R.id.statusSummaryCard);
         statusIcon = findViewById(R.id.statusIcon);
         statusMessage = findViewById(R.id.statusMessage);
+
+        // Set up motion card click listener
+        motionCardLayout.setOnClickListener(v -> toggleMotionDetails());
 
         // Set initial status
         updateStatusCard("normal", "All Good");
@@ -110,8 +123,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
 
     }
 
-
-
     @Override
     public void onConnected() {
         runOnUiThread(() -> Toast.makeText(this, "Device connected!", Toast.LENGTH_SHORT).show());
@@ -143,28 +154,24 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
             float accMag = (float) Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
             HistoryStorage.add(new HistoryStorage.Entry(
-                    System.currentTimeMillis(), bpm, temp, hrv, accX, accY, accZ, accMag
-            ));
+                    System.currentTimeMillis(), bpm, temp, hrv, accX, accY, accZ, accMag));
 
-            Log.d(TAG, String.format("Parsed values — bpm: %.1f, hrv: %.1f, temp: %.1f, acc: [%.2f, %.2f, %.2f], mag: %.2f",
-                    bpm, hrv, temp, accX, accY, accZ, accMag));
+            Log.d(TAG,
+                    String.format(
+                            "Parsed values — bpm: %.1f, hrv: %.1f, temp: %.1f, acc: [%.2f, %.2f, %.2f], mag: %.2f",
+                            bpm, hrv, temp, accX, accY, accZ, accMag));
 
             runOnUiThread(() -> {
                 hrValue.setText(String.format("%.0f", bpm));
                 tempCard.setText(String.format("%.1f°C", temp));
-                
-                // Convert motion to user-friendly activity level
-                String activityLevel;
-                if (accMag < 10.5) {
-                    activityLevel = "Resting";
-                } else if (accMag < 12.0) {
-                    activityLevel = "Light";
-                } else if (accMag < 15.0) {
-                    activityLevel = "Moderate";
-                } else {
-                    activityLevel = "Active";
-                }
-                motionCard.setText(activityLevel);
+
+                // Display real sensor data instead of activity levels
+                motionCard.setText(String.format("%.2f m/s²", accMag));
+
+                // Update detailed motion data
+                accXValue.setText(String.format("%.2f", accX));
+                accYValue.setText(String.format("%.2f", accY));
+                accZValue.setText(String.format("%.2f", accZ));
             });
 
             int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, accZ, accMag);
@@ -174,11 +181,12 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                 if (prediction == 1 && !highStressTriggered) {
                     highStressTriggered = true;
                     updateStatusCard("high_stress", "High Stress Detected!");
-                    
+
                     // Save notification to history
                     SharedPreferences notifPrefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
                     SharedPreferences.Editor editor = notifPrefs.edit();
-                    String timestamp = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString();
+                    String timestamp = android.text.format.DateFormat
+                            .format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString();
                     String oldLog = notifPrefs.getString("notifications", "");
                     String newLog = oldLog + "\n[" + timestamp + "] High stress detected.";
                     editor.putString("notifications", newLog.trim());
@@ -200,7 +208,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
             runOnUiThread(() -> debugRawJsonText.setText("Error parsing JSON:\n" + e.getMessage()));
         }
     }
-
 
     @Override
     protected void onResume() {
@@ -244,6 +251,19 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                 statusIcon.setImageResource(R.drawable.ic_check_circle);
                 statusMessage.setText("Unknown Status");
                 break;
+        }
+    }
+
+    /**
+     * Toggles the visibility of detailed motion sensor data
+     */
+    private void toggleMotionDetails() {
+        if (motionDetailsExpanded) {
+            detailedMotionData.setVisibility(LinearLayout.GONE);
+            motionDetailsExpanded = false;
+        } else {
+            detailedMotionData.setVisibility(LinearLayout.VISIBLE);
+            motionDetailsExpanded = true;
         }
     }
 
