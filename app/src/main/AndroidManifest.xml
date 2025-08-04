@@ -53,7 +53,8 @@
         <activity android:name=".activities.ConsentFormActivity" />
         <activity android:name=".activities.HistoryActivity" />
         <activity android:name=".activities.AnalyticsActivity" />
-        <activity android:name=".activities.SettingsActivity" />
+        <activity android:name=".activities.SettingsActivity"
+            android:theme="@style/Theme.AuraSense" />
         <activity android:name=".activities.ProfileActivity" />
         <activity android:name=".activities.NotificationActivity" />
 

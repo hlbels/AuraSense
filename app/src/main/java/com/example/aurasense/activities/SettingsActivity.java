@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -17,12 +18,14 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    private static final String TAG = "SettingsActivity";
     private Switch switchStressAlerts, switchModel2;
     private TextView exportDataBtn, deleteDataBtn, backBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "SettingsActivity onCreate called");
         setContentView(R.layout.activity_settings);
 
         // Initialize views
@@ -109,18 +112,19 @@ public class SettingsActivity extends AppCompatActivity {
             // Clear all SharedPreferences
             getSharedPreferences("AuraPrefs", MODE_PRIVATE).edit().clear().apply();
             getSharedPreferences("AuraNotifications", MODE_PRIVATE).edit().clear().apply();
-            
+
             // Clear history storage
             com.example.aurasense.utils.HistoryStorage.clearHistory();
-            
+
             // Reset switches to default values
             switchStressAlerts.setChecked(true);
             switchModel2.setChecked(false);
-            
+
             Toast.makeText(this, "All app data deleted successfully", Toast.LENGTH_LONG).show();
-            
+
         } catch (Exception e) {
             Toast.makeText(this, "Error deleting data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
 }

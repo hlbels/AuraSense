@@ -44,7 +44,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
@@ -115,7 +114,15 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                 startActivity(new Intent(this, ProfileActivity.class));
                 return true;
             } else if (id == R.id.nav_settings) {
-                startActivity(new Intent(this, SettingsActivity.class));
+                Log.d(TAG, "Settings navigation clicked");
+                try {
+                    Intent intent = new Intent(this, SettingsActivity.class);
+                    startActivity(intent);
+                    Log.d(TAG, "Settings activity started successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "Error starting SettingsActivity: " + e.getMessage());
+                    Toast.makeText(this, "Error opening settings: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
             return false;
