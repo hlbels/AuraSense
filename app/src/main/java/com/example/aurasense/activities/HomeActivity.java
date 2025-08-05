@@ -34,7 +34,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
     private BLEManager bleManager;
     private TFLiteEmotionInterpreter interpreter;
     private NotificationManager notificationManager;
-    private boolean highStressTriggered = false;
+    private boolean highDiscomfortTriggered = false;
     private boolean motionDetailsExpanded = false;
 
     // Status Summary Card components
@@ -49,7 +49,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
 
         // Load saved settings
         SharedPreferences prefs = getSharedPreferences("AuraPrefs", MODE_PRIVATE);
-        boolean stressAlertsEnabled = prefs.getBoolean("stress_alerts_enabled", true);
+        boolean discomfortAlertsEnabled = prefs.getBoolean("stress_alerts_enabled", true); // key name preserved
         boolean model2Enabled = prefs.getBoolean("model_2_enabled", false);
 
         // Initialize views
@@ -86,7 +86,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         bleManager = BLEManager.getInstance(this, this);
         bleManager.setCallback(this);
 
-        // Connection logic
         if (isConnected) {
             connectDeviceBtn.setVisibility(Button.GONE);
         } else {
@@ -97,6 +96,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                 finish();
             });
         }
+
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
         bottomNavigation.setSelectedItemId(R.id.nav_home); // default
 
@@ -127,7 +127,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
             }
             return false;
         });
-
     }
 
     @Override
@@ -157,6 +156,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
             float accX = (float) json.getDouble("acc_x");
             float accY = (float) json.getDouble("acc_y");
             float accZ = (float) json.getDouble("acc_z");
+            float bvp = (float) json.getDouble("bvp");
 
             float accMag = (float) Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
@@ -165,45 +165,38 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
 
             Log.d(TAG,
                     String.format(
-                            "Parsed values — bpm: %.1f, hrv: %.1f, temp: %.1f, acc: [%.2f, %.2f, %.2f], mag: %.2f",
-                            bpm, hrv, temp, accX, accY, accZ, accMag));
+                            "Parsed values — bpm: %.1f, hrv: %.1f, temp: %.1f, acc: [%.2f, %.2f, %.2f], mag: %.2f, bvp: %.2f",
+                            bpm, hrv, temp, accX, accY, accZ, accMag, bvp));
 
             runOnUiThread(() -> {
                 hrValue.setText(String.format("%.0f", bpm));
                 tempCard.setText(String.format("%.1f°C", temp));
-
-                // Display real sensor data instead of activity levels
                 motionCard.setText(String.format("%.2f m/s²", accMag));
-
-                // Update detailed motion data
                 accXValue.setText(String.format("%.2f", accX));
                 accYValue.setText(String.format("%.2f", accY));
                 accZValue.setText(String.format("%.2f", accZ));
             });
 
-            int prediction = interpreter.predictWithSmoothing(bpm, hrv, temp, accX, accY, accZ, accMag);
+            int prediction = interpreter.predictWithSmoothing(accX, accY, accZ, temp, bvp);
             Log.d(TAG, "Prediction from model: " + prediction);
 
             runOnUiThread(() -> {
-                if (prediction == 1 && !highStressTriggered) {
-                    highStressTriggered = true;
-                    updateStatusCard("high_stress", "High Stress Detected!");
+                if (prediction == 1 && !highDiscomfortTriggered) {
+                    highDiscomfortTriggered = true;
+                    updateStatusCard("high_discomfort", "High Discomfort Detected!");
 
-                    // Save notification to history
                     SharedPreferences notifPrefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
                     SharedPreferences.Editor editor = notifPrefs.edit();
                     String timestamp = android.text.format.DateFormat
                             .format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString();
                     String oldLog = notifPrefs.getString("notifications", "");
-                    String newLog = oldLog + "\n[" + timestamp + "] High stress detected.";
+                    String newLog = oldLog + "\n[" + timestamp + "] High discomfort detected.";
                     editor.putString("notifications", newLog.trim());
                     editor.apply();
 
-                    // Send real-time system notification
-                    notificationManager.sendStressAlert(bpm, timestamp);
-
+                    notificationManager.sendStressAlert(bpm, timestamp); // key name not changed
                 } else if (prediction == 0) {
-                    highStressTriggered = false;
+                    highDiscomfortTriggered = false;
                     updateStatusCard("normal", "All Good");
                 } else if (prediction == -1) {
                     updateStatusCard("error", "Unable to Analyze");
@@ -224,9 +217,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         }
     }
 
-    /**
-     * Updates the status summary card with appropriate styling and content
-     */
     private void updateStatusCard(String status, String message) {
         if (statusSummaryCard == null || statusIcon == null || statusMessage == null) {
             return;
@@ -238,7 +228,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                 statusIcon.setImageResource(R.drawable.ic_check_circle);
                 statusMessage.setText(message);
                 break;
-            case "high_stress":
+            case "high_discomfort":
                 statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_warning));
                 statusIcon.setImageResource(R.drawable.ic_warning);
                 statusMessage.setText(message);
@@ -261,9 +251,6 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         }
     }
 
-    /**
-     * Toggles the visibility of detailed motion sensor data
-     */
     private void toggleMotionDetails() {
         if (motionDetailsExpanded) {
             detailedMotionData.setVisibility(LinearLayout.GONE);
