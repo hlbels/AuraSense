@@ -169,7 +169,7 @@ void loop() {
       lastSend = millis();
     }
   } else {
-    Serial.println("No finger detected.");
+    Serial.println("No contact detected.");
     Serial.println(irValue);
   }
 
