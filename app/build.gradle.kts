@@ -59,6 +59,8 @@ dependencies {
     implementation ("org.tensorflow:tensorflow-lite:2.13.0")
     implementation ("com.google.android.material:material:1.12.0")
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation ("com.microsoft.onnxruntime:onnxruntime-android:1.16.0")
+
 
 
     testImplementation(libs.junit)

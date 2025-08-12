@@ -3,85 +3,74 @@ package com.example.aurasense.activities;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.aurasense.R;
 import com.example.aurasense.utils.HistoryStorage;
-import com.example.aurasense.utils.TFLiteEmotionInterpreter;
-import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class AnalyticsActivity extends AppCompatActivity {
 
-    private LineChart chart;
-    private Button dayBtn, weekBtn, monthBtn;
-    private TextView analyticsTitle, stressCountText, avgHeartRateText, avgTempText;
-    private TFLiteEmotionInterpreter interpreter;
-    private String currentPeriod = "day";
+    private CombinedChart chart;
+    private Button btnLine, btnBar;
+    private Spinner featureSpinner;
+    private TextView analyticsTitle, summaryText;
+
+    private enum Mode { LINE, BAR }
+    private Mode currentMode = Mode.LINE;
+
+    private enum Feature { BPM, TEMPERATURE, MOVEMENT }
+    private Feature currentFeature = Feature.BPM;
+
+    private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_analytics);
 
-        interpreter = new TFLiteEmotionInterpreter(this);
+        // IMPORTANT: Do NOT touch BLEManager here (keeps HomeActivity’s callback intact)
 
-        // Initialize views
-        chart = findViewById(R.id.analyticsChart);
-        dayBtn = findViewById(R.id.dayBtn);
-        weekBtn = findViewById(R.id.weekBtn);
-        monthBtn = findViewById(R.id.monthBtn);
+        chart = findViewById(R.id.analyticsCombinedChart);
+        btnLine = findViewById(R.id.btnLine);
+        btnBar = findViewById(R.id.btnBar);
+        featureSpinner = findViewById(R.id.featureSpinner);
         analyticsTitle = findViewById(R.id.analyticsTitle);
-        stressCountText = findViewById(R.id.stressCountText);
-        avgHeartRateText = findViewById(R.id.avgHeartRateText);
-        avgTempText = findViewById(R.id.avgTempText);
+        summaryText = findViewById(R.id.summaryText);
 
-        // Set up chart
         setupChart();
+        setupFeatureSpinner();
+        setupButtons();
 
-        // Set up period buttons
-        dayBtn.setOnClickListener(v -> {
-            currentPeriod = "day";
-            updateButtonStates();
-            loadAnalytics();
-        });
+        render();
 
-        weekBtn.setOnClickListener(v -> {
-            currentPeriod = "week";
-            updateButtonStates();
-            loadAnalytics();
-        });
-
-        monthBtn.setOnClickListener(v -> {
-            currentPeriod = "month";
-            updateButtonStates();
-            loadAnalytics();
-        });
-
-        // Load initial data
-        updateButtonStates();
-        loadAnalytics();
-
-        // Set up bottom navigation
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
         bottomNavigation.setSelectedItemId(R.id.nav_history);
-
         bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
@@ -108,162 +97,187 @@ public class AnalyticsActivity extends AppCompatActivity {
         });
     }
 
+    private void setupButtons() {
+        btnLine.setOnClickListener(v -> {
+            currentMode = Mode.LINE;
+            styleButtons();
+            render();
+        });
+        btnBar.setOnClickListener(v -> {
+            currentMode = Mode.BAR;
+            styleButtons();
+            render();
+        });
+        styleButtons(); // init styles
+    }
+
+    private void styleButtons() {
+        // Visual selection without disabling clicks
+        int sel = getResources().getColor(R.color.primary_teal);
+        int txt = getResources().getColor(R.color.text_primary);
+
+        btnLine.setBackgroundResource(currentMode == Mode.LINE ? R.drawable.card_background_selected : R.drawable.card_background);
+        btnBar.setBackgroundResource(currentMode == Mode.BAR ? R.drawable.card_background_selected : R.drawable.card_background);
+
+        btnLine.setTextColor(txt);
+        btnBar.setTextColor(txt);
+    }
+
+    private void setupFeatureSpinner() {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"BPM", "Temperature", "Movement"}
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        featureSpinner.setAdapter(adapter);
+        featureSpinner.setSelection(0);
+        featureSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0: currentFeature = Feature.BPM; break;
+                    case 1: currentFeature = Feature.TEMPERATURE; break;
+                    case 2: currentFeature = Feature.MOVEMENT; break;
+                }
+                render();
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+        });
+    }
+
     private void setupChart() {
+        chart.setNoDataText("No data yet");
+        chart.setDrawOrder(new CombinedChart.DrawOrder[]{ CombinedChart.DrawOrder.BAR, CombinedChart.DrawOrder.LINE });
         chart.setTouchEnabled(true);
         chart.setDragEnabled(true);
         chart.setScaleEnabled(true);
         chart.setPinchZoom(true);
 
         Description desc = new Description();
-        desc.setText("Stress Level Over Time");
-        desc.setTextColor(Color.GRAY);
+        desc.setText("");
         chart.setDescription(desc);
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(Color.GRAY);
-        xAxis.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                return sdf.format(new Date((long) value));
-            }
-        });
+        xAxis.setGranularity(1f);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter()); // labels applied in render()
 
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setTextColor(Color.GRAY);
-        leftAxis.setAxisMinimum(0f);
-        leftAxis.setAxisMaximum(1f);
-        leftAxis.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return value == 1f ? "High Stress" : "Normal";
-            }
-        });
-
-        YAxis rightAxis = chart.getAxisRight();
-        rightAxis.setEnabled(false);
+        chart.getAxisRight().setEnabled(false);
     }
 
-    private void updateButtonStates() {
-        // Reset all buttons
-        dayBtn.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        weekBtn.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        monthBtn.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-
-        // Highlight selected button
-        int selectedColor = getResources().getColor(R.color.primary_teal);
-        switch (currentPeriod) {
-            case "day":
-                dayBtn.setBackgroundColor(selectedColor);
-                analyticsTitle.setText("Today's Analytics");
-                break;
-            case "week":
-                weekBtn.setBackgroundColor(selectedColor);
-                analyticsTitle.setText("This Week's Analytics");
-                break;
-            case "month":
-                monthBtn.setBackgroundColor(selectedColor);
-                analyticsTitle.setText("This Month's Analytics");
-                break;
-        }
-    }
-
-    private void loadAnalytics() {
-        List<HistoryStorage.Entry> entries = getEntriesForPeriod();
-
-        if (entries.isEmpty()) {
-            // Show empty state
-            stressCountText.setText("No data available");
-            avgHeartRateText.setText("--");
-            avgTempText.setText("--");
+    private void render() {
+        List<HistoryStorage.Entry> raw = HistoryStorage.getHistory();
+        if (raw == null || raw.isEmpty()) {
+            analyticsTitle.setText("Analytics");
+            summaryText.setText("No data available yet.");
             chart.clear();
+            chart.invalidate();
             return;
         }
 
-        // Calculate statistics
-        int stressCount = 0;
-        float totalHeartRate = 0;
-        float totalTemp = 0;
-        List<Entry> chartEntries = new ArrayList<>();
+        // Build X labels (HH:mm) and index-based entries 0..N-1
+        List<String> xLabels = new ArrayList<>();
+        List<Entry> linePoints = new ArrayList<>();
+        List<BarEntry> barPoints = new ArrayList<>();
 
-        for (HistoryStorage.Entry entry : entries) {
-            float accMag = (float) Math
-                    .sqrt(entry.accX * entry.accX + entry.accY * entry.accY + entry.accZ * entry.accZ);
-            int prediction = interpreter.predictWithSmoothing(entry.bpm, entry.hrv, entry.temp, entry.accX, entry.accY,
-                    entry.accZ, accMag);
+        float min = Float.POSITIVE_INFINITY, max = Float.NEGATIVE_INFINITY, sum = 0f;
+        int n = 0;
 
-            if (prediction == 1) {
-                stressCount++;
+        for (int i = 0; i < raw.size(); i++) {
+            HistoryStorage.Entry e = raw.get(i);
+            float y;
+            switch (currentFeature) {
+                case TEMPERATURE: y = e.temp; break;
+                case MOVEMENT:
+                    y = Float.isNaN(e.accMag) ? (float)Math.sqrt(e.accX*e.accX + e.accY*e.accY + e.accZ*e.accZ) : e.accMag;
+                    break;
+                case BPM:
+                default: y = e.bpm;
             }
+            if (Float.isNaN(y) || Float.isInfinite(y)) continue;
 
-            totalHeartRate += entry.bpm;
-            totalTemp += entry.temp;
+            linePoints.add(new Entry(i, y));
+            barPoints.add(new BarEntry(i, y));
+            xLabels.add(timeFmt.format(new Date(e.timestamp)));
 
-            // Add to chart (timestamp as x, stress level as y)
-            chartEntries.add(new Entry(entry.timestamp, prediction == 1 ? 1f : 0f));
+            min = Math.min(min, y);
+            max = Math.max(max, y);
+            sum += y;
+            n++;
         }
 
-        // Update statistics
-        stressCountText.setText(String.format("%d stress events", stressCount));
-        avgHeartRateText.setText(String.format("%.0f bpm", totalHeartRate / entries.size()));
-        avgTempText.setText(String.format("%.1f°C", totalTemp / entries.size()));
+        if (n == 0) {
+            analyticsTitle.setText("Analytics");
+            summaryText.setText("No valid points for this feature.");
+            chart.clear();
+            chart.invalidate();
+            return;
+        }
 
-        // Update chart
-        LineDataSet dataSet = new LineDataSet(chartEntries, "Stress Level");
-        dataSet.setColor(getResources().getColor(R.color.primary_teal));
-        dataSet.setCircleColor(getResources().getColor(R.color.primary_teal));
-        dataSet.setLineWidth(2f);
-        dataSet.setCircleRadius(4f);
-        dataSet.setDrawValues(false);
+        float avg = sum / n;
+        analyticsTitle.setText(featureTitle(currentFeature) + " over time");
+        summaryText.setText(String.format(Locale.getDefault(),
+                "Samples: %d   Min: %.1f   Max: %.1f   Avg: %.1f", n, min, max, avg));
 
-        LineData lineData = new LineData(dataSet);
-        chart.setData(lineData);
+        // Apply X labels
+        chart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(xLabels));
+
+        // Y axis padding
+        YAxis left = chart.getAxisLeft();
+        float pad = padding(currentFeature);
+        left.setAxisMinimum(Math.max(0f, min - pad));
+        left.setAxisMaximum(max + pad);
+
+        CombinedData data = new CombinedData();
+        int color = colorForFeature(currentFeature);
+
+        if (currentMode == Mode.LINE) {
+            LineDataSet ds = new LineDataSet(linePoints, featureTitle(currentFeature));
+            ds.setColor(color);
+            ds.setCircleColor(color);
+            ds.setLineWidth(2f);
+            ds.setCircleRadius(2.5f);
+            ds.setDrawValues(false);
+            data.setData(new LineData(ds));
+        } else {
+            BarDataSet bs = new BarDataSet(barPoints, featureTitle(currentFeature));
+            bs.setColor(color);
+            bs.setDrawValues(false);
+            BarData barData = new BarData(bs);
+            barData.setBarWidth(0.6f); // relative to index spacing
+            data.setData(barData);
+        }
+
+        chart.setData(data);
         chart.invalidate();
     }
 
-    private List<HistoryStorage.Entry> getEntriesForPeriod() {
-        List<HistoryStorage.Entry> allEntries = HistoryStorage.getHistory();
-        List<HistoryStorage.Entry> filteredEntries = new ArrayList<>();
-
-        Calendar calendar = Calendar.getInstance();
-        long currentTime = calendar.getTimeInMillis();
-
-        long startTime;
-        switch (currentPeriod) {
-            case "day":
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-                startTime = calendar.getTimeInMillis();
-                break;
-            case "week":
-                calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-                startTime = calendar.getTimeInMillis();
-                break;
-            case "month":
-                calendar.set(Calendar.DAY_OF_MONTH, 1);
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-                startTime = calendar.getTimeInMillis();
-                break;
-            default:
-                startTime = 0;
+    private String featureTitle(Feature f) {
+        switch (f) {
+            case TEMPERATURE: return "Temperature (°C)";
+            case MOVEMENT:    return "Movement (m/s²)";
+            case BPM:
+            default:          return "Heart Rate (bpm)";
         }
+    }
 
-        for (HistoryStorage.Entry entry : allEntries) {
-            if (entry.timestamp >= startTime && entry.timestamp <= currentTime) {
-                filteredEntries.add(entry);
-            }
+    private int colorForFeature(Feature f) {
+        switch (f) {
+            case TEMPERATURE: return Color.parseColor("#FF5722"); // deep orange
+            case MOVEMENT:    return Color.parseColor("#3F51B5"); // indigo
+            case BPM:
+            default:          return Color.parseColor("#009688"); // teal
         }
+    }
 
-        return filteredEntries;
+    private float padding(Feature f) {
+        switch (f) {
+            case TEMPERATURE: return 0.5f;
+            case MOVEMENT:    return 0.5f;
+            case BPM:
+            default:          return 5f;
+        }
     }
 }

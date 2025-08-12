@@ -46,4 +46,8 @@
     <color name="debug_background">#ECEFF1</color>
     <color name="debug_text">#37474F</color>
     <color name="debug_border">#CFD8DC</color>
+    <color name="light_red">#D32F2F</color>
+    <color name="light_green">#388E3C</color>
+    <color name="amusement_text_dark">#4E342E</color>  <!-- deep brown -->
+    <color name="text_on_warning">#212121</color>      <!-- near-black -->
 </resources>

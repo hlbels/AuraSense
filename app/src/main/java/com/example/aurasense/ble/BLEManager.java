@@ -11,7 +11,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
@@ -40,6 +39,9 @@ public class BLEManager {
 
     private final StringBuilder bleBuffer = new StringBuilder();
 
+    // Remember last device for reconnect attempts
+    private String lastKnownDeviceAddress = null;
+
     public static BLEManager getInstance(Context context, BLECallback callback) {
         if (instance == null) {
             instance = new BLEManager(context.getApplicationContext(), callback);
@@ -66,7 +68,6 @@ public class BLEManager {
             return;
         }
 
-        // Always close previous GATT before connecting again
         if (bluetoothGatt != null) {
             Log.w(TAG, "Closing stale GATT connection before reconnecting...");
             bluetoothGatt.disconnect();
@@ -74,16 +75,21 @@ public class BLEManager {
             bluetoothGatt = null;
         }
 
+        if (device == null) {
+            Log.e(TAG, "connectToDevice: device is null");
+            if (callback != null) callback.onDisconnected();
+            return;
+        }
+
+        // remember for reconnect
+        lastKnownDeviceAddress = device.getAddress();
+
         Log.d(TAG, "Connecting to GATT server: " + device.getName() + " (" + device.getAddress() + ")");
-        
-        // Use autoConnect=true for more reliable connection
-        bluetoothGatt = device.connectGatt(context, true, gattCallback);
-        
+        bluetoothGatt = device.connectGatt(context, true, gattCallback);  // autoConnect=true for stability
+
         if (bluetoothGatt == null) {
             Log.e(TAG, "Failed to create GATT connection");
-            if (callback != null) {
-                callback.onDisconnected();
-            }
+            if (callback != null) callback.onDisconnected();
         }
     }
 
@@ -103,6 +109,39 @@ public class BLEManager {
         bleBuffer.setLength(0);
     }
 
+    // Reconnect helper used by HomeActivity watchdog
+    public void requestReconnect() {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "requestReconnect: missing BLUETOOTH_CONNECT permission");
+            return;
+        }
+
+        try {
+            // If we still have a GATT, most stacks allow calling connect() to re-establish
+            if (bluetoothGatt != null) {
+                Log.d(TAG, "requestReconnect: attempting bluetoothGatt.connect()");
+                boolean started = bluetoothGatt.connect();
+                Log.d(TAG, "requestReconnect: bluetoothGatt.connect() started=" + started);
+                return;
+            }
+
+            // Otherwise, use last known MAC if we have it
+            if (lastKnownDeviceAddress != null && bluetoothAdapter != null) {
+                BluetoothDevice dev = bluetoothAdapter.getRemoteDevice(lastKnownDeviceAddress);
+                if (dev != null) {
+                    Log.d(TAG, "requestReconnect: reconnecting to " + lastKnownDeviceAddress);
+                    bluetoothGatt = dev.connectGatt(context, true, gattCallback);
+                    return;
+                }
+            }
+
+            Log.w(TAG, "requestReconnect: no GATT and no lastKnownDeviceAddress — cannot reconnect automatically");
+
+        } catch (Throwable t) {
+            Log.w(TAG, "requestReconnect failed", t);
+        }
+    }
+
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
 
         @Override
@@ -116,26 +155,17 @@ public class BLEManager {
                     Log.d(TAG, "Connected to GATT successfully. Requesting MTU...");
                     gatt.requestMtu(512);
                 } else {
-                    Log.e(TAG, "Connected but with error status: " + status);
+                    Log.e(TAG, "Connected with error status: " + status);
                     if (callback != null) callback.onDisconnected();
                 }
             } else if (newState == android.bluetooth.BluetoothProfile.STATE_DISCONNECTED) {
-                if (status == 133) {
-                    Log.e(TAG, "Connection failed with status 133 (GATT_ERROR/Timeout). Device may not be ready or out of range.");
-                } else if (status == 8) {
-                    Log.e(TAG, "Connection failed with status 8 (Connection timeout).");
-                } else if (status == 19) {
-                    Log.e(TAG, "Connection failed with status 19 (Disconnected by remote device).");
-                } else {
-                    Log.w(TAG, "Disconnected from GATT. Status: " + status);
-                }
+                Log.e(TAG, "Disconnected. Status: " + status);
                 if (callback != null) callback.onDisconnected();
             }
         }
 
         @Override
         public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-            super.onMtuChanged(gatt, mtu, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.d(TAG, "MTU changed to: " + mtu);
             } else {
@@ -143,10 +173,7 @@ public class BLEManager {
             }
 
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "Discovering services...");
                 gatt.discoverServices();
-            } else {
-                Log.e(TAG, "Missing BLUETOOTH_CONNECT permission.");
             }
         }
 
@@ -165,6 +192,8 @@ public class BLEManager {
                         descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                         gatt.writeDescriptor(descriptor);
                         Log.d(TAG, "Notifications enabled.");
+
+                        // Trigger onConnected() right after successful descriptor write like old version
                         if (callback != null) callback.onConnected();
                     } else {
                         Log.e(TAG, "Descriptor not found.");
@@ -196,7 +225,11 @@ public class BLEManager {
                     Log.d(TAG, "Full JSON Detected: " + fullJson);
 
                     if (callback != null) {
-                        callback.onDataReceived(fullJson.trim());
+                        try {
+                            callback.onDataReceived(fullJson.trim());
+                        } catch (Exception e) {
+                            Log.e(TAG, "Failed to pass JSON to callback", e);
+                        }
                     }
 
                     bufferStr = bufferStr.substring(end + 1);

@@ -6,9 +6,10 @@ import java.util.List;
 public class HistoryStorage {
     public static class Entry {
         public final long timestamp;
-        public final float bpm, temp, hrv, accX, accY, accZ, accMag;
+        public final float bpm, temp, hrv, accX, accY, accZ, accMag, bvp; // Added bvp
 
-        public Entry(long timestamp, float bpm, float temp, float hrv, float accX, float accY, float accZ, float accMag) {
+        public Entry(long timestamp, float bpm, float temp, float hrv,
+                     float accX, float accY, float accZ, float accMag, float bvp) {
             this.timestamp = timestamp;
             this.bpm = bpm;
             this.temp = temp;
@@ -17,6 +18,7 @@ public class HistoryStorage {
             this.accY = accY;
             this.accZ = accZ;
             this.accMag = accMag;
+            this.bvp = bvp; // assign bvp
         }
     }
 

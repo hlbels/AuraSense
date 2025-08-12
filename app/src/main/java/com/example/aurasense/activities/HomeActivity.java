@@ -3,12 +3,14 @@ package com.example.aurasense.activities;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -16,8 +18,8 @@ import androidx.core.content.ContextCompat;
 import com.example.aurasense.R;
 import com.example.aurasense.ble.BLEManager;
 import com.example.aurasense.utils.HistoryStorage;
-import com.example.aurasense.utils.TFLiteEmotionInterpreter;
 import com.example.aurasense.utils.NotificationManager;
+import com.example.aurasense.utils.TFLiteEmotionInterpreter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.json.JSONException;
@@ -34,57 +36,80 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
     private BLEManager bleManager;
     private TFLiteEmotionInterpreter interpreter;
     private NotificationManager notificationManager;
-    private boolean highDiscomfortTriggered = false;
-    private boolean motionDetailsExpanded = false;
 
-    // Status Summary Card components
     private LinearLayout statusSummaryCard;
     private ImageView statusIcon;
     private TextView statusMessage;
+
+    // Debounce for notifications
+    private int lastNotifiedLabel = -99;
+
+    // ---- Stale-data watchdog & auto-reconnect ----
+    private final Handler watchdog = new Handler(Looper.getMainLooper());
+    private long lastDataMs = 0L;
+    private static final long DATA_STALE_MS = 6000L;  // 6s without packets => disconnected
+    private static final long WATCHDOG_PERIOD_MS = 2000L;
+
+    private final Runnable staleCheck = new Runnable() {
+        @Override public void run() {
+            long now = System.currentTimeMillis();
+            boolean stale = (now - lastDataMs) > DATA_STALE_MS;
+
+            if (stale) {
+                // UI: show disconnected and clear readings so we don't display stale values
+                clearRealtimeReadings();
+                updateStatusCard("disconnected", "Device Disconnected — reconnecting…");
+
+                // Try to reconnect (see notes in triggerReconnect)
+                triggerReconnect();
+            }
+            watchdog.postDelayed(this, WATCHDOG_PERIOD_MS);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // Load saved settings
         SharedPreferences prefs = getSharedPreferences("AuraPrefs", MODE_PRIVATE);
-        boolean discomfortAlertsEnabled = prefs.getBoolean("stress_alerts_enabled", true); // key name preserved
+        // kept for future toggles
+        boolean discomfortAlertsEnabled = prefs.getBoolean("stress_alerts_enabled", true);
         boolean model2Enabled = prefs.getBoolean("model_2_enabled", false);
 
-        // Initialize views
         hrValue = findViewById(R.id.hrValue);
         tempCard = findViewById(R.id.tempCard);
         motionCard = findViewById(R.id.motionCard);
         debugRawJsonText = findViewById(R.id.debugRawJsonText);
         connectDeviceBtn = findViewById(R.id.connectDeviceBtn);
 
-        // Initialize motion detail views
         motionCardLayout = findViewById(R.id.motionCardLayout);
         detailedMotionData = findViewById(R.id.detailedMotionData);
         accXValue = findViewById(R.id.accXValue);
         accYValue = findViewById(R.id.accYValue);
         accZValue = findViewById(R.id.accZValue);
 
-        // Initialize Status Summary Card components
         statusSummaryCard = findViewById(R.id.statusSummaryCard);
         statusIcon = findViewById(R.id.statusIcon);
         statusMessage = findViewById(R.id.statusMessage);
 
-        // Set up motion card click listener
         motionCardLayout.setOnClickListener(v -> toggleMotionDetails());
-
-        // Set initial status
         updateStatusCard("normal", "All Good");
 
-        // Load interpreter and notification manager
-        interpreter = new TFLiteEmotionInterpreter(this);
+        try {
+            interpreter = new TFLiteEmotionInterpreter(this);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load ONNX interpreter", e);
+        }
+
         notificationManager = new NotificationManager(this);
 
-        // BLE Manager setup
         boolean isConnected = getIntent().getBooleanExtra("isConnected", false);
         bleManager = BLEManager.getInstance(this, this);
         bleManager.setCallback(this);
+
+        // If your BLEManager exposes an auto-reconnect toggle, use it:
+        // bleManager.setAutoReconnectEnabled(true);
 
         if (isConnected) {
             connectDeviceBtn.setVisibility(Button.GONE);
@@ -98,8 +123,7 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         }
 
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
-        bottomNavigation.setSelectedItemId(R.id.nav_home); // default
-
+        bottomNavigation.setSelectedItemId(R.id.nav_home);
         bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
@@ -114,14 +138,11 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
                 startActivity(new Intent(this, ProfileActivity.class));
                 return true;
             } else if (id == R.id.nav_settings) {
-                Log.d(TAG, "Settings navigation clicked");
                 try {
-                    Intent intent = new Intent(this, SettingsActivity.class);
-                    startActivity(intent);
-                    Log.d(TAG, "Settings activity started successfully");
+                    startActivity(new Intent(this, SettingsActivity.class));
                 } catch (Exception e) {
-                    Log.e(TAG, "Error starting SettingsActivity: " + e.getMessage());
-                    Toast.makeText(this, "Error opening settings: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Settings error: " + e.getMessage());
+                    Toast.makeText(this, "Error opening settings", Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -129,77 +150,113 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         });
     }
 
+    // ---- BLE callbacks ----
+
     @Override
     public void onConnected() {
-        runOnUiThread(() -> Toast.makeText(this, "Device connected!", Toast.LENGTH_SHORT).show());
+        runOnUiThread(() -> {
+            Toast.makeText(this, "Device connected!", Toast.LENGTH_SHORT).show();
+            updateStatusCard("normal", "Connected");
+            connectDeviceBtn.setVisibility(Button.GONE);
+            lastDataMs = System.currentTimeMillis(); // reset staleness
+        });
     }
 
     @Override
     public void onDisconnected() {
         runOnUiThread(() -> {
             Toast.makeText(this, "Device disconnected!", Toast.LENGTH_SHORT).show();
-            updateStatusCard("disconnected", "Device Disconnected");
+            clearRealtimeReadings();
+            updateStatusCard("disconnected", "Device Disconnected — reconnecting…");
+            connectDeviceBtn.setVisibility(Button.VISIBLE);
         });
+        // kick off reconnect attempts
+        triggerReconnect();
     }
 
     @Override
     public void onDataReceived(String data) {
+        lastDataMs = System.currentTimeMillis(); // fresh packet, not stale
         Log.d(TAG, "Final JSON received in HomeActivity: " + data);
         runOnUiThread(() -> debugRawJsonText.setText(data));
 
         try {
             JSONObject json = new JSONObject(data);
 
-            float bpm = (float) json.getDouble("bpm");
-            float hrv = (float) json.getDouble("hrv");
-            float temp = (float) json.getDouble("temp");
-            float accX = (float) json.getDouble("acc_x");
-            float accY = (float) json.getDouble("acc_y");
-            float accZ = (float) json.getDouble("acc_z");
-            float bvp = (float) json.getDouble("bvp");
+            float bpm  = (float) json.optDouble("bpm", Float.NaN);
+            float hrv  = (float) json.optDouble("hrv", Float.NaN);
+            float temp = (float) json.optDouble("temp", Float.NaN);
+            float accX = (float) json.optDouble("acc_x", Float.NaN);
+            float accY = (float) json.optDouble("acc_y", Float.NaN);
+            float accZ = (float) json.optDouble("acc_z", Float.NaN);
+            float bvp  = (float) json.optDouble("bvp", Float.NaN);
+            int finger = json.optInt("finger", 0); // 1 = worn, 0 = not worn
+
+            // Wear detection: if not worn, show prompt and don't compute
+            if (finger != 1) {
+                runOnUiThread(() -> {
+                    updateStatusCard("not_worn", "Please wear the device to start measuring");
+                    clearRealtimeReadings();
+                });
+                lastNotifiedLabel = -99;
+                return;
+            }
 
             float accMag = (float) Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
+            // Store history only when worn
             HistoryStorage.add(new HistoryStorage.Entry(
-                    System.currentTimeMillis(), bpm, temp, hrv, accX, accY, accZ, accMag));
-
-            Log.d(TAG,
-                    String.format(
-                            "Parsed values — bpm: %.1f, hrv: %.1f, temp: %.1f, acc: [%.2f, %.2f, %.2f], mag: %.2f, bvp: %.2f",
-                            bpm, hrv, temp, accX, accY, accZ, accMag, bvp));
+                    System.currentTimeMillis(), bpm, temp, hrv, accX, accY, accZ, accMag, bvp));
 
             runOnUiThread(() -> {
-                hrValue.setText(String.format("%.0f", bpm));
-                tempCard.setText(String.format("%.1f°C", temp));
-                motionCard.setText(String.format("%.2f m/s²", accMag));
-                accXValue.setText(String.format("%.2f", accX));
-                accYValue.setText(String.format("%.2f", accY));
-                accZValue.setText(String.format("%.2f", accZ));
+                hrValue.setText(Float.isNaN(bpm) ? "--" : String.format("%.0f", bpm));
+                tempCard.setText(Float.isNaN(temp) ? "--" : String.format("%.1f°C", temp));
+                motionCard.setText(Float.isNaN(accMag) ? "--" : String.format("%.2f m/s²", accMag));
+                accXValue.setText(Float.isNaN(accX) ? "--" : String.format("%.2f", accX));
+                accYValue.setText(Float.isNaN(accY) ? "--" : String.format("%.2f", accY));
+                accZValue.setText(Float.isNaN(accZ) ? "--" : String.format("%.2f", accZ));
             });
 
-            int prediction = interpreter.predictWithSmoothing(accX, accY, accZ, temp, bvp);
+            int prediction = (interpreter != null)
+                    ? interpreter.predictFromRawSensors(accX, accY, accZ, temp, bvp)
+                    : -1;
+
             Log.d(TAG, "Prediction from model: " + prediction);
 
+            String timestamp = android.text.format.DateFormat
+                    .format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString();
+
             runOnUiThread(() -> {
-                if (prediction == 1 && !highDiscomfortTriggered) {
-                    highDiscomfortTriggered = true;
-                    updateStatusCard("high_discomfort", "High Discomfort Detected!");
+                // Mapping: 0=baseline, 1=amusement, 2=stress
+                switch (prediction) {
+                    case 2:
+                        updateStatusCard("high_discomfort", "High Stress Detected");
+                        if (lastNotifiedLabel != 2) {
+                            appendNotificationHistoryLine("[Stress] " + timestamp + " • HR=" +
+                                    (Float.isNaN(bpm) ? "--" : String.format("%.0f", bpm)) + " bpm");
+                            notificationManager.sendEmotionAlert(2, Float.isNaN(bpm) ? 0f : bpm, timestamp);
+                            lastNotifiedLabel = 2;
+                        }
+                        break;
 
-                    SharedPreferences notifPrefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = notifPrefs.edit();
-                    String timestamp = android.text.format.DateFormat
-                            .format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString();
-                    String oldLog = notifPrefs.getString("notifications", "");
-                    String newLog = oldLog + "\n[" + timestamp + "] High discomfort detected.";
-                    editor.putString("notifications", newLog.trim());
-                    editor.apply();
+                    case 1:
+                        updateStatusCard("amusement", "You Seem Amused 😊");
+                        if (lastNotifiedLabel != 1) {
+                            appendNotificationHistoryLine("[Amusement] " + timestamp + " • HR=" +
+                                    (Float.isNaN(bpm) ? "--" : String.format("%.0f", bpm)) + " bpm");
+                            notificationManager.sendEmotionAlert(1, Float.isNaN(bpm) ? 0f : bpm, timestamp);
+                            lastNotifiedLabel = 1;
+                        }
+                        break;
 
-                    notificationManager.sendStressAlert(bpm, timestamp); // key name not changed
-                } else if (prediction == 0) {
-                    highDiscomfortTriggered = false;
-                    updateStatusCard("normal", "All Good");
-                } else if (prediction == -1) {
-                    updateStatusCard("error", "Unable to Analyze");
+                    case 0:
+                        updateStatusCard("normal", "All Good");
+                        lastNotifiedLabel = 0;
+                        break;
+
+                    default:
+                        updateStatusCard("error", "Analyzing…");
+                        break;
                 }
             });
 
@@ -209,60 +266,123 @@ public class HomeActivity extends AppCompatActivity implements BLEManager.BLECal
         }
     }
 
+    // ---- Lifecycle ----
     @Override
     protected void onResume() {
         super.onResume();
-        if (bleManager != null) {
-            bleManager.setCallback(this);
-        }
+        if (bleManager != null) bleManager.setCallback(this);
+        watchdog.removeCallbacks(staleCheck);
+        watchdog.postDelayed(staleCheck, WATCHDOG_PERIOD_MS);
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        watchdog.removeCallbacks(staleCheck);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        watchdog.removeCallbacks(staleCheck);
+    }
+
+    // ---- UI helpers ----
+
     private void updateStatusCard(String status, String message) {
-        if (statusSummaryCard == null || statusIcon == null || statusMessage == null) {
-            return;
-        }
+        if (statusSummaryCard == null || statusIcon == null || statusMessage == null) return;
 
         switch (status.toLowerCase()) {
             case "normal":
                 statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_normal));
                 statusIcon.setImageResource(R.drawable.ic_check_circle);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
                 statusMessage.setText(message);
                 break;
+
             case "high_discomfort":
                 statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_warning));
                 statusIcon.setImageResource(R.drawable.ic_warning);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.text_on_warning));
                 statusMessage.setText(message);
                 break;
+
+            case "amusement":
+                // Strong yellow->orange gradient + dark text for contrast
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_amusement_strong));
+                statusIcon.setImageResource(R.drawable.ic_smile);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.amusement_text_dark));
+                statusMessage.setText(message);
+                break;
+
+            case "not_worn":
+                statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_disconnected));
+                statusIcon.setImageResource(R.drawable.ic_home);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+                statusMessage.setText(message);
+                break;
+
             case "disconnected":
                 statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_disconnected));
                 statusIcon.setImageResource(R.drawable.ic_home);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
                 statusMessage.setText(message);
                 break;
+
             case "error":
                 statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_warning));
                 statusIcon.setImageResource(R.drawable.ic_warning);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.text_on_warning));
                 statusMessage.setText(message);
                 break;
+
             default:
                 statusSummaryCard.setBackground(ContextCompat.getDrawable(this, R.drawable.status_card_normal));
                 statusIcon.setImageResource(R.drawable.ic_check_circle);
+                statusMessage.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
                 statusMessage.setText("Unknown Status");
                 break;
         }
     }
 
     private void toggleMotionDetails() {
-        if (motionDetailsExpanded) {
+        if (detailedMotionData.getVisibility() == LinearLayout.VISIBLE) {
             detailedMotionData.setVisibility(LinearLayout.GONE);
-            motionDetailsExpanded = false;
         } else {
             detailedMotionData.setVisibility(LinearLayout.VISIBLE);
-            motionDetailsExpanded = true;
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    private void clearRealtimeReadings() {
+        runOnUiThread(() -> {
+            hrValue.setText("--");
+            tempCard.setText("--");
+            motionCard.setText("--");
+            accXValue.setText("--");
+            accYValue.setText("--");
+            accZValue.setText("--");
+        });
+    }
+
+    private void appendNotificationHistoryLine(String line) {
+        SharedPreferences notifPrefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
+        String oldLog = notifPrefs.getString("notifications", "");
+        String newLog = oldLog.isEmpty() ? line : oldLog + "\n" + line;
+        notifPrefs.edit().putString("notifications", newLog).apply();
+    }
+
+    // Try to keep BLE always connected.
+    private void triggerReconnect() {
+        if (bleManager == null) return;
+
+        // If BLEManager has these, prefer them:
+        // if (!bleManager.isConnected()) bleManager.reconnect();
+
+        // Otherwise fall back to scanning & connect:
+        try {
+            bleManager.requestReconnect(); // <— implemented this in BLEManager to wrap reconnect logic
+        } catch (Throwable t) {
+            Log.w(TAG, "Reconnect request failed (implement BLEManager.requestReconnect())", t);
+        }
     }
 }

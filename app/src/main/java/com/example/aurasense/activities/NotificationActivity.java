@@ -14,6 +14,9 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class NotificationActivity extends AppCompatActivity {
 
+    private static final String PREFS = "AuraNotifications";
+    private static final String PREFS_KEY = "notifications";
+
     private TextView notificationHistory;
     private Button clearNotificationsBtn;
 
@@ -22,17 +25,13 @@ public class NotificationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
 
-        // Initialize views
         notificationHistory = findViewById(R.id.notificationHistory);
         clearNotificationsBtn = findViewById(R.id.clearNotificationsBtn);
 
-        // Load notifications
         loadNotifications();
 
-        // Set up clear notifications button with confirmation dialog
         clearNotificationsBtn.setOnClickListener(v -> showClearNotificationsDialog());
 
-        // Set up bottom navigation
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
         bottomNavigation.setSelectedItemId(R.id.nav_notifications);
 
@@ -58,9 +57,41 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void loadNotifications() {
-        SharedPreferences prefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
-        String history = prefs.getString("notifications", "");
-        notificationHistory.setText(history.isEmpty() ? "No stress notifications." : history);
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        String allLogs = prefs.getString(PREFS_KEY, "");
+
+        StringBuilder stressLogs = new StringBuilder();
+        StringBuilder amusementLogs = new StringBuilder();
+
+        if (!allLogs.isEmpty()) {
+            String[] lines = allLogs.split("\n");
+            for (String line : lines) {
+                String lower = line.toLowerCase();
+
+                // Prefer our new canonical tags
+                if (line.startsWith("[Stress]")) {
+                    stressLogs.append(line).append("\n");
+                } else if (line.startsWith("[Amusement]")) {
+                    amusementLogs.append(line).append("\n");
+                } else {
+                    // Backward compatibility with legacy strings
+                    if (lower.contains("high discomfort") || lower.contains("stress")) {
+                        stressLogs.append(line).append("\n");
+                    } else if (lower.contains("amusement") || lower.contains("positive emotion")) {
+                        amusementLogs.append(line).append("\n");
+                    }
+                }
+            }
+        }
+
+        StringBuilder display = new StringBuilder();
+        display.append("📉 Stress Notifications:\n");
+        display.append(stressLogs.length() > 0 ? stressLogs.toString() : "No stress notifications.\n");
+
+        display.append("\n🎉 Amusement Notifications:\n");
+        display.append(amusementLogs.length() > 0 ? amusementLogs.toString() : "No amusement notifications.");
+
+        notificationHistory.setText(display.toString().trim());
     }
 
     private void showClearNotificationsDialog() {
@@ -68,9 +99,9 @@ public class NotificationActivity extends AppCompatActivity {
                 .setTitle("Clear Notifications")
                 .setMessage("Are you sure you want to clear all notification history? This action cannot be undone.")
                 .setPositiveButton("Clear", (dialog, which) -> {
-                    SharedPreferences prefs = getSharedPreferences("AuraNotifications", MODE_PRIVATE);
-                    prefs.edit().remove("notifications").apply();
-                    loadNotifications(); // Refresh the display
+                    SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+                    prefs.edit().remove(PREFS_KEY).apply();
+                    loadNotifications();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

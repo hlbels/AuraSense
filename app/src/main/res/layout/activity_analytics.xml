@@ -5,11 +5,14 @@
     android:layout_height="match_parent"
     android:background="@color/background_primary">
 
+    <!-- Scrollable content -->
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/bottomNavigation"
-        android:padding="@dimen/spacing_lg">
+        android:padding="@dimen/spacing_lg"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,60 +31,57 @@
                 android:gravity="center"
                 android:layout_marginBottom="@dimen/spacing_md" />
 
-            <!-- Period Selection Buttons -->
+            <!-- Mode + Feature selection -->
             <LinearLayout
+                android:id="@+id/modeFeatureRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="@dimen/spacing_lg"
-                android:gravity="center">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/spacing_lg">
 
                 <Button
-                    android:id="@+id/dayBtn"
+                    android:id="@+id/btnLine"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="@dimen/spacing_xs"
-                    android:text="Day"
-                    android:textSize="@dimen/text_size_body"
+                    android:text="View Graph"
                     android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_size_body"
                     android:background="@drawable/card_background"
                     android:elevation="@dimen/card_elevation" />
 
                 <Button
-                    android:id="@+id/weekBtn"
+                    android:id="@+id/btnBar"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginHorizontal="@dimen/spacing_xs"
-                    android:text="Week"
-                    android:textSize="@dimen/text_size_body"
+                    android:text="View Bar"
                     android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_size_body"
                     android:background="@drawable/card_background"
                     android:elevation="@dimen/card_elevation" />
 
-                <Button
-                    android:id="@+id/monthBtn"
+                <Spinner
+                    android:id="@+id/featureSpinner"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="@dimen/spacing_xs"
-                    android:text="Month"
-                    android:textSize="@dimen/text_size_body"
-                    android:textColor="@color/text_primary"
                     android:background="@drawable/card_background"
-                    android:elevation="@dimen/card_elevation" />
-
+                    android:paddingLeft="@dimen/spacing_md"
+                    android:paddingRight="@dimen/spacing_md" />
             </LinearLayout>
 
-            <!-- Statistics Cards -->
+            <!-- Quick stats -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="@dimen/spacing_lg">
 
-                <!-- Stress Events Card -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -92,14 +92,12 @@
                     android:orientation="vertical"
                     android:padding="@dimen/spacing_md"
                     android:gravity="center">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="⚠️"
                         android:textSize="24sp"
                         android:layout_marginBottom="@dimen/spacing_sm" />
-
                     <TextView
                         android:id="@+id/stressCountText"
                         android:layout_width="wrap_content"
@@ -109,10 +107,8 @@
                         android:textStyle="bold"
                         android:textColor="@color/text_primary"
                         android:gravity="center" />
-
                 </LinearLayout>
 
-                <!-- Average Heart Rate Card -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -123,14 +119,12 @@
                     android:orientation="vertical"
                     android:padding="@dimen/spacing_md"
                     android:gravity="center">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="❤️"
                         android:textSize="24sp"
                         android:layout_marginBottom="@dimen/spacing_sm" />
-
                     <TextView
                         android:id="@+id/avgHeartRateText"
                         android:layout_width="wrap_content"
@@ -140,10 +134,8 @@
                         android:textStyle="bold"
                         android:textColor="@color/text_primary"
                         android:gravity="center" />
-
                 </LinearLayout>
 
-                <!-- Average Temperature Card -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -154,14 +146,12 @@
                     android:orientation="vertical"
                     android:padding="@dimen/spacing_md"
                     android:gravity="center">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="🌡️"
                         android:textSize="24sp"
                         android:layout_marginBottom="@dimen/spacing_sm" />
-
                     <TextView
                         android:id="@+id/avgTempText"
                         android:layout_width="wrap_content"
@@ -171,31 +161,37 @@
                         android:textStyle="bold"
                         android:textColor="@color/text_primary"
                         android:gravity="center" />
-
                 </LinearLayout>
-
             </LinearLayout>
 
-            <!-- Chart -->
+            <!-- Summary -->
+            <TextView
+                android:id="@+id/summaryText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Summary"
+                android:textColor="@color/text_secondary"
+                android:paddingBottom="@dimen/spacing_sm"
+                android:layout_marginBottom="@dimen/spacing_sm" />
+
+            <!-- Chart card -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="300dp"
+                android:layout_height="340dp"
                 android:background="@drawable/card_background"
                 android:elevation="@dimen/card_elevation"
                 android:padding="@dimen/spacing_sm">
 
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/analyticsChart"
+                <com.github.mikephil.charting.charts.CombinedChart
+                    android:id="@+id/analyticsCombinedChart"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
-
             </LinearLayout>
 
         </LinearLayout>
-
     </ScrollView>
 
-    <!-- Bottom Navigation Bar -->
+    <!-- Bottom Nav -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
@@ -205,5 +201,4 @@
         app:itemIconTint="@color/selector_nav_item"
         app:itemTextColor="@color/selector_nav_item"
         app:menu="@menu/bottom_nav_menu" />
-
 </RelativeLayout>

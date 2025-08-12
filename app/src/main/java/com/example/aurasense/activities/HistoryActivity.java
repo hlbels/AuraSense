@@ -6,12 +6,15 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.aurasense.R;
 import com.example.aurasense.utils.HistoryStorage;
 import com.example.aurasense.utils.TFLiteEmotionInterpreter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,15 +31,16 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        // Initialize TensorFlow Lite interpreter for stress prediction
-        interpreter = new TFLiteEmotionInterpreter(this);
+        try {
+            interpreter = new TFLiteEmotionInterpreter(this);
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to load model: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
 
-        // Initialize views
         historyListView = findViewById(R.id.historyListView);
         clearHistoryBtn = findViewById(R.id.clearHistoryBtn);
         analyticsBtn = findViewById(R.id.analyticsBtn);
 
-        // Set up buttons
         analyticsBtn.setOnClickListener(v -> {
             Intent intent = new Intent(HistoryActivity.this, AnalyticsActivity.class);
             startActivity(intent);
@@ -44,10 +48,8 @@ public class HistoryActivity extends AppCompatActivity {
 
         clearHistoryBtn.setOnClickListener(v -> showClearHistoryDialog());
 
-        // Load and display history
         loadHistory();
 
-        // Set up bottom navigation
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
         bottomNavigation.setSelectedItemId(R.id.nav_history);
 
@@ -81,21 +83,54 @@ public class HistoryActivity extends AppCompatActivity {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
 
         for (HistoryStorage.Entry entry : HistoryStorage.getHistory()) {
-            // Use the TensorFlow model to determine stress level
-            float accMag = (float) Math
-                    .sqrt(entry.accX * entry.accX + entry.accY * entry.accY + entry.accZ * entry.accZ);
-            int prediction = interpreter.predictWithSmoothing(entry.bpm, entry.hrv, entry.temp, entry.accX, entry.accY,
-                    entry.accZ, accMag);
+            try {
+                float accMag = (float) Math.sqrt(
+                        entry.accX * entry.accX + entry.accY * entry.accY + entry.accZ * entry.accZ
+                );
 
-            String stressLevel = (prediction == 1) ? "High Stress" : "Normal";
-            String heartRate = String.format("%.0f bpm", entry.bpm);
+                // Default to 0 in case bvp is not yet tracked in Entry
+                float bvp = entry.bvp != 0 ? entry.bvp : 0.005f;
 
-            String formatted = String.format(
-                    "Stress: %s • %s\n%s",
-                    stressLevel,
-                    heartRate,
-                    sdf.format(new Date(entry.timestamp)));
-            entries.add(formatted);
+                int prediction = interpreter.predictFromRawSensors(
+                        entry.accX, entry.accY, entry.accZ, entry.temp, bvp
+                );
+
+                String emotionLabel;
+                switch (prediction) {
+                    case 1:
+                        emotionLabel = "High Stress";
+                        break;
+                    case 2:
+                        emotionLabel = "Amusement";
+                        break;
+                    case 0:
+                        emotionLabel = "Baseline";
+                        break;
+                    default:
+                        emotionLabel = "Unknown";
+                }
+
+                String movement;
+                if (accMag < 0.5) {
+                    movement = "Not Moving";
+                } else if (accMag < 2.5) {
+                    movement = "Moving";
+                } else {
+                    movement = "Moving Fast";
+                }
+
+                String heartRate = String.format("%.0f bpm", entry.bpm);
+                String temperature = String.format("%.1f°C", entry.temp);
+                String formatted = String.format(
+                        "Emotion: %s • %s • %s • %s\n%s",
+                        emotionLabel, heartRate, temperature, movement,
+                        sdf.format(new Date(entry.timestamp))
+                );
+
+                entries.add(formatted);
+            } catch (Exception e) {
+                entries.add("Error analyzing entry: " + e.getMessage());
+            }
         }
 
         if (entries.isEmpty()) {
