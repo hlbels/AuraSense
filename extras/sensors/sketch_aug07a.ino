@@ -1,16 +1,17 @@
 #include <Arduino.h>
 #include <Wire.h>
+// ==== Libraries concerning BLE ====
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
 #include <ArduinoJson.h>
-#include "MAX30105.h"
-#include "heartRate.h"
-#include <Adafruit_MPU6050.h>
+#include "MAX30105.h" // Library for HR sensor
+#include "heartRate.h" // HR sensor helper functions
+#include <Adafruit_MPU6050.h> // Library for IMU
 #include <Adafruit_Sensor.h>
 
-// ===== I2C Setup =====
+// ===== I2C Setup (the same for all sensors) =====
 #define SDA_PIN 11
 #define SCL_PIN 12
 
@@ -23,8 +24,8 @@
 #define CHARACTERISTIC_UUID "a0e6fc01-df5e-11ee-a506-0050569c1234"
 
 // ===== Sensor Objects =====
-MAX30105 particleSensor;
-Adafruit_MPU6050 mpu;
+MAX30105 particleSensor; // For HR sensor
+Adafruit_MPU6050 mpu; // For IMU
 BLECharacteristic* pCharacteristic;
 BLEServer* pServer;
 
@@ -43,6 +44,7 @@ bool fingerDetected = false;
 // ===== BLE Connection Timing =====
 unsigned long connectionTime = 0;
 
+// ==== BLE Server Callbacks ====
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) override {
     Serial.println("Central connected");
@@ -80,7 +82,7 @@ void setupBLE() {
   Serial.println("BLE advertising started");
 }
 
-// ===== MLX90614 Temp Read =====
+// ===== MLX90614 Temperature Read =====
 float readMLX90614(byte reg) {
   Wire.beginTransmission(MLX90614_ADDRESS);
   Wire.write(reg);
@@ -95,17 +97,18 @@ float readMLX90614(byte reg) {
     byte high = Wire.read();
     Wire.read(); // PEC
     uint16_t raw = (high << 8) | low;
-    return (raw * 0.02) - 273.15;
+    return (raw * 0.02) - 273.15; // Converting to degrees Celsius
   }
   return -999;
 }
 
-// ===== Setup =====
+// ===== Arduino Setup =====
 void setup() {
   Serial.begin(115200);
   Wire.begin(SDA_PIN, SCL_PIN);
   delay(500);
 
+  // Initializing MAX30102 HR sensor
   if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
     Serial.println("MAX30102 not found!");
     while (1);
@@ -114,6 +117,7 @@ void setup() {
   particleSensor.setPulseAmplitudeRed(0x3F);
   particleSensor.setPulseAmplitudeGreen(0);
 
+  // Initializing MPU6050 accelerometer/gyroscope
   if (!mpu.begin()) {
     Serial.println("MPU6050 not found!");
     while (1);
@@ -121,11 +125,12 @@ void setup() {
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+  // Start BLE service
   setupBLE();
   Serial.println("Sensors initialized");
 }
 
-// ===== Loop =====
+// ===== Loop (collecting sensor data) =====
 void loop() {
   static unsigned long lastSend = 0;
 
@@ -134,7 +139,7 @@ void loop() {
     delay(10);
     return;
   }
-
+// HR detection
   uint32_t irValue = particleSensor.getIR();
   fingerDetected = irValue > 50000;
 
@@ -176,13 +181,14 @@ void loop() {
 
     lastBeat = millis();
   }
-
+// Send data every 2 seconds
   if (millis() - lastSend >= 2000) {
     sensors_event_t acc, gyro, tempEvent;
     mpu.getEvent(&acc, &gyro, &tempEvent);
     float objectTemp = readMLX90614(MLX90614_TOBJ);
     float bvp = irValue / 100000.0f;
-
+    
+// JSON object with all sensor data
     StaticJsonDocument<256> doc;
     doc["acc_x"] = round(acc.acceleration.x * 100) / 100.0;
     doc["acc_y"] = round(acc.acceleration.y * 100) / 100.0;
